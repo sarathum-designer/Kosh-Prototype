@@ -103,10 +103,55 @@ tr.hl td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .quote .a{color:var(--accent)}
 footer{padding-block:clamp(64px,9vw,120px) 48px}
 footer .end{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:64px;padding-top:24px;border-top:1px solid var(--line);font:400 13px/1.5 var(--mono);color:var(--muted)}
-.reveal{opacity:1}
-@media (prefers-reduced-motion:no-preference){.reveal.pre{opacity:0;transform:translateY(14px)}.reveal{transition:opacity .6s ease,transform .6s ease}}
+
+/* ---- motion (Platform-style) ---- */
+.progress{position:fixed;left:0;top:0;height:2px;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--accent);z-index:11}
+.nav ol a.on{color:var(--text);background:var(--card)}
+.btn{position:relative;overflow:hidden;transition:border-color .25s,background-color .35s,color .35s}
+.btn .lbl{display:inline-grid;overflow:hidden;line-height:1.15;height:1.15em}
+.btn .lbl span{grid-area:1/1;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+.btn .lbl span+span{transform:translateY(110%)}
+.btn:hover .lbl span:first-child{transform:translateY(-110%)}
+.btn:hover .lbl span+span{transform:translateY(0)}
+.btn:not(.btn--accent):hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn .arr{transition:transform .35s}
+.btn:hover .arr{transform:translateX(4px)}
+.card{transition:transform .5s cubic-bezier(.2,.8,.2,1),border-color .3s,background-color .3s;position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(240,90,62,.13),transparent 60%)}
+.card:hover{border-color:var(--line2);transform:translateY(-3px)}
+.card:hover::after{opacity:1}
+.card--accent::after{background:radial-gradient(360px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.22),transparent 60%)}
+.ch{opacity:.12;transition:opacity .2s linear}
+.ch.lit{opacity:1}
+.mega .ln{display:block;overflow:hidden;padding-bottom:.06em}
+.mega .ln>span{display:inline-block}
+.roll{display:inline-flex;overflow:hidden;height:1em;line-height:1;vertical-align:top}
+.roll .col{display:flex;flex-direction:column;transition:transform 1.6s cubic-bezier(.16,1,.3,1)}
+.roll .col span{height:1em;line-height:1}
+.shead h2{transition:filter .9s ease,opacity .9s ease,transform .9s cubic-bezier(.2,.8,.2,1)}
+.shead.pre h2{filter:blur(10px);opacity:0;transform:translateY(20px)}
+.tablewrap tr{transition:background-color .25s}
+.tablewrap tbody tr:hover td{background:rgba(255,255,255,.025)}
+.map .pt,.map .me{transition:transform .6s cubic-bezier(.2,.8,.2,1),opacity .6s}
+.map.pre .pt{opacity:0;transform:translateY(12px)}
+.map.pre .me{opacity:0;transform:scale(.7)}
+.map .me{animation:none}
+@media (prefers-reduced-motion:no-preference){
+  .map:not(.pre) .me{animation:breathe 3.2s ease-in-out infinite}
+  @keyframes breathe{0%,100%{box-shadow:0 10px 40px -10px rgba(240,90,62,.7)}50%{box-shadow:0 10px 60px -4px rgba(240,90,62,.95)}}
+  .reveal.pre>*{opacity:0;transform:translateY(24px)}
+  .reveal>*{transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+  .reveal.pre{opacity:1;transform:none}
+  .hero .tagbox,.hero .herorow{animation:rise .9s cubic-bezier(.2,.8,.2,1) both}
+  .hero .herorow{animation-delay:.9s}
+  .mega .ln>span{animation:lineup 1.1s cubic-bezier(.16,1,.3,1) both}
+  @keyframes lineup{from{transform:translateY(105%)}to{transform:none}}
+  @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+}
+@media (prefers-reduced-motion:reduce){.ch{opacity:1}.shead.pre h2{filter:none;opacity:1;transform:none}.map.pre .pt,.map.pre .me{opacity:1;transform:none}}
 </style>
 
+<div class="progress" id="progress" aria-hidden="true"></div>
 <header class="nav">
   <div class="wrap">
     <a class="logo" href="#top" aria-label="Kosh, top of page"><svg viewBox="0 0 161 64" role="img" aria-label="Kosh"><g fill="none" stroke="currentColor" stroke-width="9"><path d="M4.5 0V64M7 45.5L31 24.5M16.5 37L33 64"/><circle cx="56" cy="44" r="15.5"/><path d="M110.5 30.5C107.8 26.4 103 24.5 98 24.5C90.6 24.5 86 28.2 86 33.2C86 43.7 111 40.2 111 51.2C111 56.2 105.7 59.5 98.3 59.5C92.2 59.5 87.4 57.3 84.8 53.3"/><path d="M128 0V64M128 44C128 31 134.3 24.5 143 24.5C151.5 24.5 156.5 30.2 156.5 39.5V64"/></g><circle cx="56" cy="44" r="5" fill="#F05A3E"/></svg></a>
@@ -401,8 +446,73 @@ footer .end{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;m
       pts.push({x:cluster?(.45+Math.random()*.5)*w:gx*w, y:cluster?(.15+Math.random()*.6)*h:Math.random()*h, r:Math.random()*1.3+.2, a:Math.random()*.7+.15, s:Math.random()*.15+.03, warm:Math.random()<.22}); } }
   function draw(){ x.clearRect(0,0,w,h); for(var i=0;i<pts.length;i++){ var p=pts[i]; x.beginPath(); x.arc(p.x,p.y,p.r,0,6.283); x.fillStyle=p.warm?"rgba(240,90,62,"+p.a+")":"rgba(241,236,226,"+p.a+")"; x.fill(); if(!still){ p.y-=p.s; if(p.y<-4){p.y=h+4;} } } if(!still) requestAnimationFrame(draw); }
   size(); draw(); window.addEventListener("resize",function(){size(); if(still) draw();});
-  if("IntersectionObserver" in window && !still){ var els=[].slice.call(document.querySelectorAll(".reveal")); var io=new IntersectionObserver(function(es){es.forEach(function(e){ if(e.isIntersecting){e.target.classList.remove("pre"); io.unobserve(e.target);} });},{rootMargin:"0px 0px -8% 0px"});
-    els.forEach(function(el){ var r=el.getBoundingClientRect(); if(r.top>window.innerHeight){ el.classList.add("pre"); io.observe(el);} }); }
+
+  /* mouse parallax on stars */
+  var mx=0,my=0; if(!still){ window.addEventListener("mousemove",function(e){ mx=(e.clientX/innerWidth-.5); my=(e.clientY/innerHeight-.5); c.style.transform="translate("+(mx*-18)+"px,"+(my*-12)+"px)"; }); }
+
+  /* hero headline: split into lines that rise */
+  var mega=document.querySelector(".mega");
+  if(mega && !still){
+    var words=[], nodes=[].slice.call(mega.childNodes), sp=true;
+    nodes.forEach(function(n){ var acc=n.nodeType===1; n.textContent.split(/(\s+)/).forEach(function(t){ if(!t) return; if(/^\s+$/.test(t)){ sp=true; return; } if(!sp && words.length){ words[words.length-1].parts.push({t:t,a:acc}); } else { words.push({parts:[{t:t,a:acc}]}); } sp=false; }); });
+    mega.innerHTML=words.map(function(w){ return '<span class="w" style="display:inline-block">'+w.parts.map(function(p){ return p.a?'<span class="a">'+p.t.replace(/</g,"&lt;")+'</span>':p.t.replace(/</g,"&lt;"); }).join("")+'</span>'; }).join(" ");
+    var ws=[].slice.call(mega.querySelectorAll(".w")), lines=[], top=null, cur;
+    ws.forEach(function(w){ var t=w.offsetTop; if(t!==top){ cur=[]; lines.push(cur); top=t; } cur.push(w); });
+    mega.innerHTML=lines.map(function(l,i){ return '<span class="ln"><span style="animation-delay:'+(.15+i*.12)+'s">'+l.map(function(w){return w.outerHTML;}).join(" ")+'</span></span>'; }).join("");
+  }
+
+  /* scroll-linked character reveal on statements and quotes */
+  var reveals=[].slice.call(document.querySelectorAll(".statement,.quote"));
+  reveals.forEach(function(el){
+    (function walk(node){ [].slice.call(node.childNodes).forEach(function(n){
+      if(n.nodeType===3){ var f=document.createDocumentFragment(), first=true, prev=n.previousSibling; n.textContent.split(/(\s+)/).forEach(function(word){ if(!word) return; if(/^\s+$/.test(word)){ first=false; f.appendChild(document.createTextNode(word)); return; }
+          var host=null; if(first && prev && prev.nodeType===1){ var ws=prev.querySelectorAll(".wd"); host=ws[ws.length-1]||null; }
+          var w=host||document.createElement("span"); if(!host){ w.className="wd"; w.style.display="inline-block"; w.style.whiteSpace="nowrap"; }
+          word.split("").forEach(function(ch){ var s=document.createElement("span"); s.className="ch"; s.textContent=ch; if(host) s.style.color="var(--text)"; w.appendChild(s); }); if(!host) f.appendChild(w); first=false; }); n.parentNode.replaceChild(f,n); }
+      else if(n.nodeType===1){ walk(n); } }); })(el);
+    el._chs=[].slice.call(el.querySelectorAll(".ch"));
+  });
+  function lightText(){
+    var vh=innerHeight;
+    reveals.forEach(function(el){ var r=el.getBoundingClientRect(); var p=(vh*.88-r.top)/(vh*.5+r.height*.4); p=Math.max(0,Math.min(1,p)); var n=Math.round(p*el._chs.length);
+      for(var i=0;i<el._chs.length;i++){ var on=i<n; if(on!==el._chs[i]._on){ el._chs[i]._on=on; el._chs[i].classList.toggle("lit",on); } } });
+  }
+
+  /* rolling numbers in hero stats */
+  var rolls=[].slice.call(document.querySelectorAll(".stat .n"));
+  rolls.forEach(function(el){
+    (function walk(node){ [].slice.call(node.childNodes).forEach(function(n){
+      if(n.nodeType===3){ var f=document.createDocumentFragment(); n.textContent.split("").forEach(function(ch){
+        if(/\d/.test(ch)){ var r=document.createElement("span"); r.className="roll"; var col=document.createElement("span"); col.className="col"; var d=+ch, loops=10+d; for(var k=0;k<=loops;k++){ var s=document.createElement("span"); s.textContent=k%10; col.appendChild(s); } col.dataset.to=loops; r.appendChild(col); f.appendChild(r); }
+        else f.appendChild(document.createTextNode(ch)); }); n.parentNode.replaceChild(f,n); }
+      else if(n.nodeType===1 && n.tagName!=="SUP"){ walk(n); } }); })(el);
+  });
+  function runRolls(){ rolls.forEach(function(el,ei){ [].slice.call(el.querySelectorAll(".col")).forEach(function(col,ci){ setTimeout(function(){ col.style.transform="translateY(-"+col.dataset.to+"em)"; }, still?0:(1000+ei*180+ci*70)); }); }); }
+  if(still){ rolls.forEach(function(el){ [].slice.call(el.querySelectorAll(".col")).forEach(function(col){ col.style.transition="none"; }); }); }
+  runRolls();
+
+  /* cursor spotlight on cards */
+  document.addEventListener("pointermove",function(e){ var card=e.target.closest&&e.target.closest(".card"); if(!card) return; var r=card.getBoundingClientRect(); card.style.setProperty("--mx",(e.clientX-r.left)+"px"); card.style.setProperty("--my",(e.clientY-r.top)+"px"); });
+
+  /* button label roll: duplicate text */
+  [].slice.call(document.querySelectorAll(".btn")).forEach(function(b){ var arr=b.querySelector(".arr"); var txt=""; [].slice.call(b.childNodes).forEach(function(n){ if(n.nodeType===3) txt+=n.textContent; }); txt=txt.trim(); if(!txt) return;
+    [].slice.call(b.childNodes).forEach(function(n){ if(n.nodeType===3) n.remove(); });
+    var l=document.createElement("span"); l.className="lbl"; var a=document.createElement("span"); a.textContent=txt; var c2=document.createElement("span"); c2.textContent=txt; c2.setAttribute("aria-hidden","true"); l.appendChild(a); l.appendChild(c2); b.insertBefore(l,arr||null); });
+
+  /* appear on scroll: staggered children, blurred section titles, map */
+  var targets=[].slice.call(document.querySelectorAll(".reveal,.shead,.map"));
+  if("IntersectionObserver" in window && !still){
+    targets.forEach(function(el){ var r=el.getBoundingClientRect(); if(r.top>innerHeight*.92){ el.classList.add("pre"); if(el.classList.contains("reveal")) [].slice.call(el.children).forEach(function(ch,i){ ch.style.transitionDelay=(i*70)+"ms"; }); } });
+    var io=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.remove("pre"); io.unobserve(e.target); } }); },{rootMargin:"0px 0px -10% 0px"});
+    targets.forEach(function(el){ if(el.classList.contains("pre")) io.observe(el); });
+  }
+
+  /* progress bar and active nav item */
+  var bar=document.getElementById("progress"), links=[].slice.call(document.querySelectorAll(".nav ol a")), secs=links.map(function(a){return document.querySelector(a.getAttribute("href"));});
+  function onScroll(){ var h=document.documentElement; var p=h.scrollTop/((h.scrollHeight-h.clientHeight)||1); bar.style.transform="scaleX("+p+")";
+    var idx=-1; secs.forEach(function(s,i){ if(s && s.getBoundingClientRect().top<innerHeight*.4) idx=i; }); links.forEach(function(a,i){ a.classList.toggle("on",i===idx); }); lightText(); }
+  var ticking=false; window.addEventListener("scroll",function(){ if(!ticking){ ticking=true; requestAnimationFrame(function(){ ticking=false; onScroll(); }); } },{passive:true});
+  window.addEventListener("resize",onScroll); onScroll();
 })();
 </script>
 </body></html>
