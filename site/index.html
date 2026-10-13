@@ -1,0 +1,521 @@
+<title>Kosh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif&display=swap">
+<style>
+/* Layout: a ledger. Fixed left index of sections, one working sheet on the right; every number carries a Source Dot. Tokens from the Kosh brand system. */
+:root{
+  --paper:#F2EEE6;--paper-raised:#FAF8F3;--paper-sunk:#E8E3D8;--ink:#16140F;--ink-muted:#5F5A50;--line:#D9D2C4;--line-strong:#8F897C;
+  --vermilion:#E9512F;--on-vermilion:#16140F;--vermilion-text:#B0311B;--vermilion-wash:#F8DDD3;
+  --verified:#2B6A4C;--conflict:#93600A;--stale:#6B675E;--indigo:#34457A;--focus:#16140F;
+  --sans:"Geist","Inter",system-ui,sans-serif;--serif:"Instrument Serif",Georgia,serif;--mono:"Geist Mono",ui-monospace,Menlo,monospace;
+  --r-sm:4px;--r-md:8px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#12110E;--paper-raised:#1C1A16;--paper-sunk:#0B0A08;--ink:#F1ECE2;--ink-muted:#A49E92;--line:#2E2B25;--line-strong:#6A655B;
+  --vermilion:#F05A3E;--on-vermilion:#12110E;--vermilion-text:#FF8166;--vermilion-wash:#3A1A12;--verified:#63BC90;--conflict:#E2A63E;--stale:#8E897E;--indigo:#8FA3E0;--focus:#F1ECE2;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#12110E;--paper-raised:#1C1A16;--paper-sunk:#0B0A08;--ink:#F1ECE2;--ink-muted:#A49E92;--line:#2E2B25;--line-strong:#6A655B;
+  --vermilion:#F05A3E;--on-vermilion:#12110E;--vermilion-text:#FF8166;--vermilion-wash:#3A1A12;--verified:#63BC90;--conflict:#E2A63E;--stale:#8E897E;--indigo:#8FA3E0;--focus:#F1ECE2;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font:400 15px/1.55 var(--sans);margin:0}
+a{color:var(--vermilion-text)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.side{border-right:1px solid var(--line);padding:24px 16px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;display:flex;flex-direction:column;gap:24px;background:var(--paper)}
+.side svg.wm{width:88px;height:auto;display:block}
+.side .tag{font:400 12px/1.4 var(--mono);color:var(--ink-muted);margin-top:8px}
+nav{display:flex;flex-direction:column;gap:2px}
+nav button{all:unset;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:var(--r-sm);font:500 14px/1.3 var(--sans);color:var(--ink-muted)}
+nav button:hover{color:var(--ink);background:var(--paper-sunk)}
+nav button[aria-current="page"]{color:var(--ink);background:var(--paper-raised);box-shadow:inset 0 0 0 1px var(--line)}
+nav button:focus-visible{outline:2px solid var(--focus)}
+nav .n{font:400 11px/1 var(--mono);color:var(--ink-muted)}
+.side .foot{margin-top:auto;font:400 11px/1.5 var(--mono);color:var(--ink-muted)}
+main{padding-block:32px 64px;padding-inline:clamp(16px,4vw,48px);min-width:0;max-width:1180px}
+.eyebrow{font:500 12px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted)}
+h1{font:400 clamp(34px,4.6vw,52px)/1.04 var(--serif);margin:6px 0 10px;text-wrap:balance;letter-spacing:-.005em}
+h2{font:600 20px/1.25 var(--sans);letter-spacing:-.015em;margin:0 0 4px}
+h3{font:600 15px/1.3 var(--sans);margin:0}
+p{margin:0}
+.lede{max-width:64ch;color:var(--ink-muted);font-size:16px}
+.stack{display:flex;flex-direction:column;gap:16px}
+.section{display:flex;flex-direction:column;gap:20px;margin-top:32px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--r-md);padding:20px;min-width:0}
+.muted{color:var(--ink-muted)}
+.mono{font-family:var(--mono)}
+.small{font-size:13px}
+.src{font:400 12px/1.45 var(--mono);color:var(--ink-muted)}
+.btn{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 var(--sans);padding:11px 16px;border-radius:var(--r-md);border:1px solid var(--line-strong);background:var(--paper-raised);cursor:pointer}
+.btn:hover{border-color:var(--ink)}
+.btn--primary{background:var(--vermilion);border-color:var(--vermilion);color:var(--on-vermilion)}
+.btn--primary:hover{filter:brightness(1.04);border-color:var(--vermilion)}
+.btn--quiet{border-color:transparent;background:transparent;color:var(--vermilion-text);padding-inline:4px}
+.btn[disabled]{opacity:.55;cursor:default}
+.chip{display:inline-flex;align-items:center;gap:6px;font:500 12px/1 var(--sans);padding:6px 9px;border-radius:var(--r-sm);border:1px solid var(--line);background:var(--paper-raised);white-space:nowrap}
+.chip--ok{color:var(--verified)} .chip--warn{color:var(--conflict)} .chip--no{color:var(--vermilion-text)} .chip--none{color:var(--stale)}
+button.chip{cursor:pointer}
+button.chip[data-suggest]{white-space:normal;text-align:left;line-height:1.3}
+button.chip:hover{border-color:var(--line-strong)}
+/* Source Dot */
+.dot{all:unset;cursor:pointer;display:inline-block;width:8px;height:8px;border-radius:999px;background:var(--vermilion);margin-left:4px;vertical-align:.35em;flex:none}
+.dot:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.dot--conflict{background:linear-gradient(90deg,var(--conflict) 50%,transparent 50%);box-shadow:inset 0 0 0 1.5px var(--conflict)}
+.dot--stale{background:transparent;box-shadow:inset 0 0 0 1.5px var(--stale)}
+.dot--verified{background:var(--verified)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font:400 12px/1 var(--sans);color:var(--ink-muted)}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend .dot{vertical-align:middle;cursor:default;margin:0}
+/* forms */
+label.f{display:flex;flex-direction:column;gap:6px;font:500 13px/1.3 var(--sans);min-width:0}
+label.f span.h{font-weight:400;color:var(--ink-muted)}
+input[type=text],input[type=number],select,textarea{background:var(--paper-raised);border:1px solid var(--line-strong);border-radius:var(--r-sm);padding:9px 10px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:96px;line-height:1.5}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{display:inline-flex;gap:6px;align-items:center;font:400 13px/1 var(--sans);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;background:var(--paper-raised);cursor:pointer}
+.checks input{accent-color:var(--vermilion)}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-md);background:var(--paper-raised)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 12px/1.3 var(--sans);color:var(--ink-muted);background:var(--paper-sunk);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td .big{font:500 18px/1.2 var(--mono);letter-spacing:-.01em;white-space:nowrap}
+td.city{font-weight:600}
+.bar{height:8px;border-radius:999px;background:var(--paper-sunk);position:relative;margin-top:8px;min-width:120px}
+.bar i{position:absolute;top:0;bottom:0;border-radius:999px;background:var(--vermilion)}
+.barrow{display:grid;grid-template-columns:150px minmax(0,1fr) 150px;gap:12px;align-items:center}
+@media (max-width:600px){.barrow{grid-template-columns:1fr auto;gap:4px 12px}.barrow .bar{grid-column:1/-1;grid-row:2;min-width:0}}
+.verdict{display:flex;flex-direction:column;gap:6px}
+/* answer */
+.answer{white-space:normal;max-width:72ch}
+.answer p+p,.answer ul{margin-top:10px}
+.answer ul{padding-left:20px;margin-bottom:0}
+.cite{all:unset;cursor:pointer;font:500 11px/1 var(--mono);padding:2px 5px;border-radius:3px;background:var(--vermilion-wash);color:var(--ink);margin:0 1px;vertical-align:1px}
+.cite:focus-visible{outline:2px solid var(--focus)}
+.msg{display:flex;flex-direction:column;gap:8px;padding:16px 0;border-bottom:1px solid var(--line)}
+.msg .who{font:500 12px/1 var(--mono);color:var(--ink-muted);text-transform:uppercase;letter-spacing:.05em}
+.msg.user .body{font-weight:500}
+.askbar{display:flex;gap:8px;align-items:flex-end}
+.askbar textarea{min-height:52px}
+/* conflicts */
+.xgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;margin-top:14px}
+.xcell{background:var(--paper-sunk);padding:14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.xcell .v{font:500 24px/1.1 var(--mono);letter-spacing:-.02em;overflow-wrap:anywhere}
+/* drawer */
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--paper-raised);border-left:1px solid var(--line);padding:calc(24px + env(safe-area-inset-top,0px)) 24px 24px;z-index:20;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.drawer .v{font:500 30px/1.1 var(--mono);letter-spacing:-.02em}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:19}
+.banner{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px dashed var(--line-strong);border-radius:var(--r-md);font-size:13px;color:var(--ink-muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{border-top:2px solid var(--ink);padding-top:10px}
+.kpi .v{font:500 30px/1.05 var(--mono);letter-spacing:-.02em;margin:6px 0 4px}
+.prov{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;padding:16px 0;border-bottom:1px solid var(--line)}
+.brief{background:var(--paper-raised);border:1px solid var(--line);border-radius:var(--r-md);padding:clamp(20px,4vw,40px);max-width:820px}
+.brief h2{margin-top:24px}
+.brief .verdictline{font:400 26px/1.2 var(--serif);margin:8px 0 0}
+.thinking{font:400 13px/1.4 var(--mono);color:var(--ink-muted)}
+.mobilebar{display:none}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{display:none}
+  .mobilebar{display:flex;flex-direction:column;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--paper);border-bottom:1px solid var(--line);padding:12px 16px}
+  .mobilebar nav{flex-direction:row;overflow-x:auto;gap:4px}
+  .mobilebar nav button{white-space:nowrap}
+  main{padding-block:20px 48px}
+}
+@media (prefers-reduced-motion:no-preference){.fade{animation:fade .25s ease-out}@keyframes fade{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}}
+</style>
+
+<div class="app">
+  <aside class="side" aria-label="Kosh">
+    <div>
+      <svg class="wm" viewBox="0 0 161 64" role="img" aria-label="Kosh"><g fill="none" stroke="currentColor" stroke-width="9"><path d="M4.5 0V64M7 45.5L31 24.5M16.5 37L33 64"/><circle cx="56" cy="44" r="15.5"/><path d="M110.5 30.5C107.8 26.4 103 24.5 98 24.5C90.6 24.5 86 28.2 86 33.2C86 43.7 111 40.2 111 51.2C111 56.2 105.7 59.5 98.3 59.5C92.2 59.5 87.4 57.3 84.8 53.3"/><path d="M128 0V64M128 44C128 31 134.3 24.5 143 24.5C151.5 24.5 156.5 30.2 156.5 39.5V64"/></g><circle cx="56" cy="44" r="5" fill="var(--vermilion)"/></svg>
+      <div class="tag">India's GCC truth, in one place.</div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="foot" id="foot"></div>
+  </aside>
+  <div style="min-width:0">
+    <div class="mobilebar">
+      <svg class="wm" viewBox="0 0 161 64" style="width:64px" role="img" aria-label="Kosh"><g fill="none" stroke="currentColor" stroke-width="9"><path d="M4.5 0V64M7 45.5L31 24.5M16.5 37L33 64"/><circle cx="56" cy="44" r="15.5"/><path d="M110.5 30.5C107.8 26.4 103 24.5 98 24.5C90.6 24.5 86 28.2 86 33.2C86 43.7 111 40.2 111 51.2C111 56.2 105.7 59.5 98.3 59.5C92.2 59.5 87.4 57.3 84.8 53.3"/><path d="M128 0V64M128 44C128 31 134.3 24.5 143 24.5C151.5 24.5 156.5 30.2 156.5 39.5V64"/></g><circle cx="56" cy="44" r="5" fill="var(--vermilion)"/></svg>
+      <nav id="navm"></nav>
+    </div>
+    <main id="main"></main>
+  </div>
+</div>
+<div id="drawerRoot"></div>
+
+<script id="kosh-data" type="application/json">{"meta":{"name":"Kosh dataset","version":"0.1","as_of":"2026-10-13","note":"Prototype dataset compiled from public sources. Every figure carries a source and date. Not investment, legal or tax advice."},"sources":[{"id":"S1","publisher":"Nasscom-Zinnov","title":"India GCC Landscape FY2026","url":"https://zinnov.com/centers-of-excellence/zinnov-nasscom-india-gcc-landscape-2026-report/","date":"2026-05","kind":"research","sells_services":"Zinnov sells GCC setup advisory"},{"id":"S2","publisher":"Business Today","title":"India's GCC story hits 2030 target four years early","url":"https://www.businesstoday.in/amp/technology/news/story/the-big-boom-how-indias-gcc-story-hits-2030-target-4-years-early-530265-2026-05-07","date":"2026-05-07","kind":"news","sells_services":null},{"id":"S3","publisher":"KNN India","title":"Govt targets 5,000 GCCs by 2030: FM at CII GCC Summit","url":"https://knnindia.co.in/news/newsdetails/economy/govt-targets-5000-global-capability-centres-by-2030-fm-sitharaman","date":"2026-07-10","kind":"government","sells_services":null},{"id":"S4","publisher":"Colliers via Outlook Business","title":"Foreign firms rent 105 mn sq ft since 2022 for GCCs","url":"https://www.outlookbusiness.com/news/foreign-firms-rent-105-mn-sq-ft-office-space-since-2022-to-establish-gccs-in-india-colliers","date":"2026-07-24","kind":"broker","sells_services":"Colliers sells leasing advisory"},{"id":"S5","publisher":"Zinnov","title":"5 shifts defining India's GCC story in 2025","url":"https://zinnov.com/centers-of-excellence/5-shifts-defining-indias-global-capability-centers-gccs-story-in-2025-blog","date":"2026-01-08","kind":"research","sells_services":"Zinnov sells GCC setup advisory"},{"id":"S6","publisher":"Vestian via The Week/PTI","title":"GCC count and city split","url":"https://www.theweek.in/wire-updates/business/2025/07/21/dcm52-biz-realty-gcc.html","date":"2025-07-21","kind":"broker","sells_services":"Vestian sells workplace advisory"},{"id":"S7","publisher":"TeamLease via Storyboard18","title":"India added 220 new GCCs in two years","url":"https://www.storyboard18.com/how-it-works/india-added-220-new-gccs-in-2-years-sector-eyes-4-million-more-jobs-by-fy30-84071.htm","date":"2025-11-12","kind":"staffing","sells_services":"TeamLease sells GCC staffing"},{"id":"S8","publisher":"ANSR via CXOToday","title":"Emerging enterprises fuel India's GCC boom","url":"https://cxotoday.com/press-release/emerging-enterprises-fuel-indias-gcc-boom-462000-professionals-14b-in-cumulative-revenue-new-ansr-report/","date":"2025-11-25","kind":"research","sells_services":"ANSR sells GCC setup (BOT)"},{"id":"S9","publisher":"JLL via CXOToday","title":"GCC expansion hits record 31 mn sq ft","url":"https://cxotoday.com/research-whitepapers/indias-gcc-expansion-hits-record-31-million-sq-ft-with-metros-leading-growth-despite-tier-ii-emergence-jll/","date":"2026-02-17","kind":"broker","sells_services":"JLL sells leasing advisory"},{"id":"S10","publisher":"CBRE","title":"India Market Monitor Q2 2026","url":"https://mktgdocs.cbre.com/2299/46818e44-7c68-4075-87d4-f55be26b98d0-598336659/India_Market_Monitor_Q2_2026_-.pdf","date":"2026-07","kind":"broker","sells_services":"CBRE sells leasing advisory"},{"id":"S11","publisher":"CBRE via IANS","title":"States target 1.18 million jobs, 1,380 new GCCs by 2031","url":"https://ianslive.in/indian-states-target-118-million-jobs-1380-new-gccs-by-2031--20260814123137","date":"2026-08-14","kind":"broker","sells_services":"CBRE sells leasing advisory"},{"id":"S12","publisher":"Siasat","title":"New Telangana GCC policy to focus on AI, space, semiconductors","url":"https://www.siasat.com/new-telangana-gcc-policy-to-focus-on-ai-space-semiconductors-3543873/","date":"2026-09-17","kind":"news","sells_services":null},{"id":"S13","publisher":"South First","title":"Karnataka launches India's first GCC policy","url":"https://thesouthfirst.com/news/karnataka-launches-indias-first-gcc-policy-aiming-50-billion-economic-output-by-2029/","date":"2024-09-27","kind":"news","sells_services":null},{"id":"S14","publisher":"law.asia","title":"India GCC growth and state policies","url":"https://law.asia/india-gcc-growth/","date":"2025","kind":"legal","sells_services":null},{"id":"S15","publisher":"KPMG","title":"Flash News: Maharashtra GCC Policy 2025","url":"https://www.in.kpmg.com/taxflashnews/KPMG-Flash-News-Maharshtra-GCC-policy-2025.pdf","date":"2025-10","kind":"advisory","sells_services":"KPMG sells GCC advisory"},{"id":"S16","publisher":"RSM India","title":"Gujarat GCC Policy 2025-30","url":"https://www.rsm.global/india/sites/default/files/media/publications/2025/Gujarat%20GCC%20Policy%202025_A%20Landmark%20Initiative%20to%20Attract%20Global%20Enterprises.pdf","date":"2025-02","kind":"advisory","sells_services":"RSM sells advisory"},{"id":"S17","publisher":"Khaitan & Co","title":"Uttar Pradesh releases its final GCC policy","url":"https://www.khaitanco.com/thought-leadership/Uttar-Pradesh-releases-its-final-GCC-Policy","date":"2025-05","kind":"legal","sells_services":null},{"id":"S19","publisher":"Mondaq / Khaitan","title":"Rajasthan releases its GCC policy","url":"https://webiis10.mondaq.com/india/employee-rights-labour-relations/1724116/impetus-to-gccs-in-india-rajasthan-releases-its-gcc-policy","date":"2025","kind":"legal","sells_services":null},{"id":"S20","publisher":"Mondaq / Khaitan","title":"Odisha releases its GCC policy","url":"https://webiis10.mondaq.com/india/contracts-and-commercial-law/1749448/impetus-to-gccs-in-india-odisha-releases-its-gcc-policy","date":"2025-12","kind":"legal","sells_services":null},{"id":"S21","publisher":"Drishti IAS","title":"Madhya Pradesh GCC Policy 2025","url":"https://www.drishtiias.com/state-pcs-current-affairs/madhya-pradesh-gcc-policy-2025","date":"2025-02","kind":"news","sells_services":null},{"id":"S22","publisher":"Khaitan & Co","title":"Andhra Pradesh IT and GCC Policy 4.0","url":"https://khaitanco.com/thought-leadership/Impetus-to-GCCs-in-India-Andhra-Pradesh-Releases-its-IT-and-GCC-Policy","date":"2024-12","kind":"legal","sells_services":null},{"id":"S23","publisher":"DT Next","title":"TN Budget: payroll subsidies and IT parks","url":"https://www.dtnext.in/amp/news/tamilnadu/tn-budget-from-payroll-subsidies-to-space-to-it-parks-the-big-budgetary-push-for-industries-768932","date":"2024-02","kind":"news","sells_services":null},{"id":"S24","publisher":"Knight Frank via Siasat","title":"Office rent in Hyderabad rises 10% in H1 2025","url":"https://www.siasat.com/office-rent-in-hyderabad-sees-10-pc-rise-in-first-half-of-2025-3241549/","date":"2025-07-03","kind":"broker","sells_services":"Knight Frank sells leasing advisory"},{"id":"S25","publisher":"The Realty Today (Propstack registration data)","title":"Qualcomm leases 2.56 lakh sq ft at Bagmane Constellation","url":"https://therealtytoday.com/news/commercial/semiconductor-giant-qualcomm-leases-256-lakh-sq-ft-at-bagmane-constellation-for-184-cr/","date":"2025","kind":"registry","sells_services":null},{"id":"S26","publisher":"Zinnov","title":"High-performer attrition in GCC India 2026","url":"https://zinnov.com/global-talent/high-performer-attrition-gcc-india-2026-zinnov-blog/","date":"2026-06","kind":"research","sells_services":"Zinnov sells GCC setup advisory"},{"id":"S27","publisher":"EY","title":"GCC Pulse Survey, November 2025","url":"https://www.ey.com/content/dam/ey-unified-site/ey-com/en-in/newsroom/2025/11/ey-global-capability-center-pulse-survey-november-2025.pdf","date":"2025-11","kind":"survey","sells_services":"EY sells GCC advisory"},{"id":"S28","publisher":"Flexiple Talent Market","title":"Salary medians by city (software engineer)","url":"https://flexiple.com/market","date":"2026-08","kind":"talent","sells_services":"Flexiple sells hiring and GCC setup"},{"id":"S29","publisher":"Vestian via The Realty Today","title":"Office leasing reaches record 23.9 mn sq ft in Q2 2026","url":"https://therealtytoday.com/news/market-insights/indias-office-leasing-reaches-record-239-mn-sq-ft-in-q2-2026-as-rentals-rise-vestian-report","date":"2026-07-17","kind":"broker","sells_services":"Vestian sells workplace advisory"},{"id":"S31","publisher":"Business Standard","title":"GCCs struggle to go beyond cost arbitrage in AI era","url":"https://www.business-standard.com/technology/tech-news/gccs-struggle-to-go-beyond-cost-arbitrage-in-ai-era-shows-data-126071401063_1.html","date":"2026-07-14","kind":"news","sells_services":null},{"id":"S32","publisher":"VJM Global","title":"Cost of setting up a GCC in India","url":"https://www.vjmglobal.com/blog/setting-up-gcc-cost-india-guide-gcc","date":"2026","kind":"vendor","sells_services":"VJM Global sells setup services"},{"id":"S33","publisher":"Omnivoo","title":"GCC India cost breakdown","url":"https://www.omnivoo.com/blog/gcc-india-cost-breakdown","date":"2026","kind":"vendor","sells_services":"Omnivoo sells EOR"},{"id":"S34","publisher":"Wisemonk","title":"What transfers in a build-operate-transfer","url":"https://www.wisemonk.io/blogs/what-transfers-build-operate-transfer-india","date":"2026","kind":"vendor","sells_services":"Wisemonk sells EOR / BOT"},{"id":"S35","publisher":"Everest Group","title":"GCC Setup PEAK Matrix 2025","url":"https://www.everestgrp.com/report/egr-2025-34-r-7666","date":"2025-11","kind":"research","sells_services":null},{"id":"S36","publisher":"AIM Research","title":"Top GCC enablement service providers 2025","url":"https://aimresearch.co/reports/top-gcc-enablement-service-providers-2025-india","date":"2025-12","kind":"research","sells_services":null},{"id":"S37","publisher":"ANSR via BriefGlance","title":"GCCs go mainstream: how small firms are reshaping India's talent hub","url":"https://briefglance.com/articles/gccs-go-mainstream-how-small-firms-are-reshaping-indias-talent-hub","date":"2026-07","kind":"research","sells_services":"ANSR sells GCC setup (BOT)"},{"id":"S38","publisher":"Ceipal","title":"New GCCs in India 2024-2026","url":"https://www.ceipal.com/resources/new-gccs-in-india-who-launched-whos-expanding-and-whos-coming-next-2024-2026","date":"2026-03-23","kind":"vendor","sells_services":"Ceipal sells recruiting software"},{"id":"S39","publisher":"Flexiple","title":"Upcoming Global Capability Centers in India","url":"https://flexiple.com/global-capability-centers/upcoming-global-capability-centers-in-india","date":"2026","kind":"talent","sells_services":"Flexiple sells hiring and GCC setup"},{"id":"S40","publisher":"Entrepreneur India (Nasscom-Zinnov)","title":"Mid-market GCCs set to drive the next phase of growth","url":"https://india.entrepreneur.com/technology/mid-market-gccs-set-to-drive-the-next-phase-of-growth/490546","date":"2025-04","kind":"research","sells_services":"Zinnov sells GCC setup advisory"},{"id":"S41","publisher":"UNI","title":"ANSR to set up 200 new GCCs in next five years","url":"https://www.uniindia.com/ansr-to-set-up-200-new-gccs-in-next-5-year-globally-including-india/business-economy/news/3513828.html","date":"2025","kind":"news","sells_services":null},{"id":"S42","publisher":"CXO Digital Pulse","title":"Inductus and DST Gujarat sign MoU","url":"https://www.cxodigitalpulse.com/inductus-group-and-dst-government-of-gujarat-signed-strategic-mou-to-position-gujarat-as-a-global-gcc-hub/","date":"2026-04","kind":"news","sells_services":null},{"id":"S43","publisher":"Deloitte India","title":"Deloitte India and Embark form a strategic alliance","url":"https://www.deloitte.com/in/en/about/press-room/deloitte-india-and-embark-form-a-strategic-alliance.html","date":"2025-08-06","kind":"press release","sells_services":null},{"id":"S44","publisher":"HDFC Sky","title":"Quess Corp sets up new division for GCC market","url":"https://hdfcsky.com/news/quess-corp-sets-up-new-business-division-for-targeting-gcc-market","date":"2025-06-03","kind":"news","sells_services":null},{"id":"S45","publisher":"Elets","title":"KDEM and GoodWorks target ₹5,000 crore GCC investment","url":"https://egov.eletsonline.com/2026/08/kdem-goodworks-target-5000-crore-gcc-investment-in-karnataka/","date":"2026-08-06","kind":"news","sells_services":null},{"id":"S46","publisher":"Cushman & Wakefield","title":"Launch of GCC advisory practice","url":"https://www.cushmanwakefield.com/en/india/news/2024/07/cushman-and-wakefield-launches-new-holistic-global-capability-center-advisory-practice","date":"2024-07","kind":"press release","sells_services":null},{"id":"S47","publisher":"JLL","title":"JLL India partners with Aeka Advisors","url":"https://www.jll.com/en-in/newsroom/jll-india-partners-with-aeka-advisors-to-service-global","date":"2025","kind":"press release","sells_services":null},{"id":"S48","publisher":"ThePrint","title":"TeamLease and Invest UP partner for GCC talent","url":"https://theprint.in/economy/teamlease-group-invest-up-partner-to-strengthen-talent-acquisition-for-gccs/2969616/","date":"2026","kind":"news","sells_services":null},{"id":"S49","publisher":"Business Standard","title":"Bhartiya Group launches GCC enablement venture","url":"https://www.business-standard.com/companies/news/bhartiya-group-launches-new-venture-to-serve-as-gcc-enablement-platform-125042400523_1.html","date":"2025-04-24","kind":"news","sells_services":null},{"id":"S50","publisher":"UNI","title":"Keralam launches GCC Boilerplate","url":"https://test.uniindia.com/keralam-launches-gcc-boilerplate-to-simplify-setup-of-global-capability-centres/south/news/3965723.html","date":"2026-09-05","kind":"news","sells_services":null}],"facts":[{"id":"F1","subject":"india","metric":"GCC count","value":2117,"unit":"GCCs","num":2117,"source":"S1","as_of":"2026-03","definition":"Parent companies with an India GCC","note":""},{"id":"F2","subject":"india","metric":"GCC count","value":1760,"unit":"GCCs (1,760+)","num":1760,"source":"S5","as_of":"2025-12","definition":"Calendar-year view","note":""},{"id":"F3","subject":"india","metric":"GCC count","value":1800,"unit":"GCC centres (1,800+)","num":1800,"source":"S7","as_of":"2025-11","definition":"FY25 basis","note":""},{"id":"F4","subject":"india","metric":"GCC count","value":1700,"unit":"GCCs (~1,700)","num":1700,"source":"S6","as_of":"2025-07","definition":"Broker count of occupiers","note":""},{"id":"F5","subject":"india","metric":"GCC count","value":2100,"unit":"GCCs (2,100+)","num":2100,"source":"S4","as_of":"2025-12","definition":"Broker count","note":""},{"id":"F6","subject":"india","metric":"GCC units","value":3728,"unit":"units","num":3728,"source":"S1","as_of":"2026-03","definition":"Physical centres; one company can run several","note":""},{"id":"F7","subject":"india","metric":"GCC headcount","value":2.36,"unit":"million people","num":2.36,"source":"S1","as_of":"2026-03","definition":"","note":""},{"id":"F8","subject":"india","metric":"GCC revenue","value":98.4,"unit":"US$ billion","num":98.4,"source":"S1","as_of":"2026-03","definition":"Cost-plus billing to parents","note":""},{"id":"F9","subject":"india","metric":"New GCCs per year","value":105,"unit":"~100-110 a year","num":105,"source":"S5","as_of":"2025-12","definition":"Zinnov tracking, early 2024 to late 2025","note":""},{"id":"F10","subject":"india","metric":"New GCCs per year","value":100,"unit":"200+ in two years","num":100,"source":"S9","as_of":"2026-02","definition":"JLL, two years to early 2026","note":""},{"id":"F11","subject":"india","metric":"New GCCs per year","value":110,"unit":"220+ from FY23 to FY25","num":110,"source":"S7","as_of":"2025-11","definition":"","note":""},{"id":"F12","subject":"india","metric":"New GCCs per year","value":365,"unit":"'nearly one a day'","num":365,"source":"S3","as_of":"2026-07","definition":"Rhetorical, Finance Minister's speech","note":""},{"id":"F13","subject":"india","metric":"New GCC setups H1 2026","value":62,"unit":"setups","num":62,"source":"S37","as_of":"2026-06","definition":"","note":""},{"id":"F14","subject":"india","metric":"Share of H1 2026 setups under US$100M revenue","value":27,"unit":"%","num":27,"source":"S37","as_of":"2026-06","definition":"17 of 62","note":""},{"id":"F15","subject":"india","metric":"Mid-market GCCs","value":583,"unit":"GCCs","num":583,"source":"S1","as_of":"2026-03","definition":"US$100M-1B revenue parents","note":""},{"id":"F16","subject":"india","metric":"Mid-market GCCs","value":480,"unit":"GCCs (480+)","num":480,"source":"S40","as_of":"2025-04","definition":"US$100M-1B revenue parents","note":""},{"id":"F17","subject":"india","metric":"GCC attrition 2025","value":9,"unit":"%","num":9,"source":"S27","as_of":"2025-11","definition":"EY survey of GCCs","note":""},{"id":"F18","subject":"india","metric":"GCC attrition 2025","value":15.1,"unit":"%","num":15.1,"source":"S26","as_of":"2026-06","definition":"Zinnov SIAH sample","note":""},{"id":"F19","subject":"india","metric":"GCC share of office leasing","value":42,"unit":"% (Q2 2026)","num":42,"source":"S10","as_of":"2026-07","definition":"Top cities, CBRE definition","note":""},{"id":"F20","subject":"india","metric":"GCC share of office leasing","value":52,"unit":"% (Q2 2026)","num":52,"source":"S29","as_of":"2026-07","definition":"Vestian definition","note":""},{"id":"F21","subject":"india","metric":"GCC share of office leasing","value":46,"unit":"% (H1 2026)","num":46,"source":"S4","as_of":"2026-07","definition":"Top 7 cities, Colliers","note":""},{"id":"F22","subject":"india","metric":"GCC closures in 2025","value":25,"unit":"25+ closures","num":25,"source":"S31","as_of":"2026-07","definition":"Neovay tracking","note":""},{"id":"F23","subject":"india","metric":"GCCs set up since 2021 that have plateaued","value":30,"unit":"% (~150 centres)","num":30,"source":"S31","as_of":"2026-07","definition":"Embark / UnearthIQ","note":""},{"id":"F24","subject":"india","metric":"Setup time to first hires (EOR/BOT)","value":"5-16","unit":"weeks","num":null,"source":"S33","as_of":"2026","definition":"Vendor estimate","note":""},{"id":"F25","subject":"india","metric":"Setup time (own entity)","value":"6-18","unit":"months","num":null,"source":"S33","as_of":"2026","definition":"Vendor estimate","note":""},{"id":"F26","subject":"india","metric":"Setup time","value":"3-6","unit":"months","num":null,"source":"S5","as_of":"2026-01","definition":"Zinnov typical","note":""},{"id":"F27","subject":"india","metric":"EOR fee per employee per month","value":99,"unit":"US$ (from)","num":99,"source":"S34","as_of":"2026","definition":"Vendor's own price","note":""},{"id":"F28","subject":"india","metric":"EOR fee per employee per month","value":"199-599","unit":"US$","num":null,"source":"S33","as_of":"2026","definition":"Vendor's own price range","note":""},{"id":"F29","subject":"india","metric":"Grade A office rent, tier-1 cities","value":"50-100","unit":"₹ / sq ft / month","num":null,"source":"S32","as_of":"2026","definition":"Vendor estimate","note":""},{"id":"F30","subject":"india","metric":"States with dedicated GCC policies","value":8,"unit":"states","num":8,"source":"S11","as_of":"2026-08","definition":"","note":""},{"id":"F31","subject":"india","metric":"New GCCs targeted by states by 2031","value":1380,"unit":"GCCs","num":1380,"source":"S11","as_of":"2026-08","definition":"","note":""},{"id":"F32","subject":"india","metric":"Government GCC ecosystem target 2030","value":5000,"unit":"GCCs","num":5000,"source":"S3","as_of":"2026-07","definition":"","note":""},{"id":"F33","subject":"bengaluru","metric":"GCC count","value":487,"unit":"GCCs","num":487,"source":"S6","as_of":"2025-07","definition":"Companies","note":""},{"id":"F34","subject":"bengaluru","metric":"GCC count","value":880,"unit":"centres (880+)","num":880,"source":"S5","as_of":"2025-12","definition":"Units","note":""},{"id":"F35","subject":"bengaluru","metric":"GCC count","value":900,"unit":"units (900+)","num":900,"source":"S9","as_of":"2026-02","definition":"Units","note":""},{"id":"F36","subject":"bengaluru","metric":"Share of GCC activity","value":"34-39","unit":"%","num":36.5,"source":"S9","as_of":"2026-02","definition":"","note":""},{"id":"F37","subject":"bengaluru","metric":"Software engineer median salary","value":15.7,"unit":"₹ lakh / year","num":15.7,"source":"S28","as_of":"2026-08","definition":"Median of disclosed pay","note":""},{"id":"F38","subject":"bengaluru","metric":"Office rent (single transaction)","value":113,"unit":"₹ / sq ft / month","num":113,"source":"S25","as_of":"2025","definition":"Qualcomm, ORR, registered lease","note":""},{"id":"F39","subject":"bengaluru","metric":"ER&D voluntary attrition","value":14.3,"unit":"%","num":14.3,"source":"S26","as_of":"2026-06","definition":"","note":""},{"id":"F40","subject":"hyderabad","metric":"GCC count","value":273,"unit":"GCCs","num":273,"source":"S6","as_of":"2025-07","definition":"Companies","note":""},{"id":"F41","subject":"hyderabad","metric":"GCC count","value":355,"unit":"centres (355+)","num":355,"source":"S5","as_of":"2025-12","definition":"Units","note":""},{"id":"F42","subject":"hyderabad","metric":"GCC count","value":515,"unit":"GCCs","num":515,"source":"S12","as_of":"2026-09","definition":"State government count","note":""},{"id":"F43","subject":"hyderabad","metric":"Share of GCC absorption Q2 2026","value":21,"unit":"%","num":21,"source":"S29","as_of":"2026-07","definition":"","note":""},{"id":"F44","subject":"hyderabad","metric":"Software engineer median salary","value":10.4,"unit":"₹ lakh / year","num":10.4,"source":"S28","as_of":"2026-08","definition":"Median of disclosed pay","note":""},{"id":"F45","subject":"hyderabad","metric":"Office rent, SBD","value":"70-95","unit":"₹ / sq ft / month","num":82.5,"source":"S24","as_of":"2025-07","definition":"","note":""},{"id":"F46","subject":"hyderabad","metric":"New GCCs in 2025-26","value":75,"unit":"centres","num":75,"source":"S12","as_of":"2026-09","definition":"Highest of any state","note":""},{"id":"F47","subject":"pune","metric":"GCC count","value":178,"unit":"GCCs","num":178,"source":"S6","as_of":"2025-07","definition":"Companies","note":""},{"id":"F48","subject":"pune","metric":"Share of GCC activity","value":"15-20","unit":"%","num":17.5,"source":"S9","as_of":"2026-02","definition":"","note":""},{"id":"F49","subject":"pune","metric":"Software engineer median salary","value":9.5,"unit":"₹ lakh / year","num":9.5,"source":"S28","as_of":"2026-08","definition":"","note":""},{"id":"F50","subject":"chennai","metric":"GCC count","value":162,"unit":"GCCs","num":162,"source":"S6","as_of":"2025-07","definition":"Companies","note":""},{"id":"F51","subject":"chennai","metric":"Software engineer median salary","value":7.6,"unit":"₹ lakh / year","num":7.6,"source":"S28","as_of":"2026-08","definition":"","note":""},{"id":"F52","subject":"chennai","metric":"ER&D voluntary attrition","value":8.2,"unit":"%","num":8.2,"source":"S26","as_of":"2026-06","definition":"","note":""},{"id":"F53","subject":"ncr","metric":"GCC count","value":272,"unit":"GCCs","num":272,"source":"S6","as_of":"2025-07","definition":"Companies","note":""},{"id":"F54","subject":"ncr","metric":"Software engineer median salary","value":14.1,"unit":"₹ lakh / year","num":14.1,"source":"S28","as_of":"2026-08","definition":"Delhi","note":""},{"id":"F55","subject":"mumbai","metric":"GCC count","value":207,"unit":"GCCs","num":207,"source":"S6","as_of":"2025-07","definition":"Companies","note":""},{"id":"F56","subject":"mumbai","metric":"Software engineer median salary","value":9.7,"unit":"₹ lakh / year","num":9.7,"source":"S28","as_of":"2026-08","definition":"","note":""},{"id":"F57","subject":"ahmedabad","metric":"Rent reimbursement cap (Gujarat policy)","value":50,"unit":"₹ / sq ft / month","num":50,"source":"S16","as_of":"2025-02","definition":"A policy cap, not a market rent","note":""},{"id":"F58","subject":"kochi","metric":"Kerala GCC framework","value":"Boilerplate launched; policy in draft","unit":"","num":null,"source":"S50","as_of":"2026-09","definition":"","note":""}],"cities":[{"id":"bengaluru","name":"Bengaluru","state":"KA","tier":1},{"id":"hyderabad","name":"Hyderabad","state":"TG","tier":1},{"id":"pune","name":"Pune","state":"MH","tier":1},{"id":"chennai","name":"Chennai","state":"TN","tier":1},{"id":"ncr","name":"Delhi NCR","state":"HR","alt_state":"UP","tier":1},{"id":"mumbai","name":"Mumbai","state":"MH","tier":1},{"id":"ahmedabad","name":"Ahmedabad / GIFT City","state":"GJ","tier":2},{"id":"kochi","name":"Kochi","state":"KL","tier":2}],"states":[{"id":"KA","name":"Karnataka","status":"Policy 2024-29 (draft text verified; final amounts not verified)","source":"S13","extra_sources":["S14"],"rules":{},"incentives":["Rent reimbursement up to 50%","R&D grants up to ₹50 crore","EPF support","45-day approvals","'Beyond Bengaluru' package for locations outside Bengaluru"],"watch":"Final notified amounts not verified."},{"id":"TG","name":"Telangana","status":"No notified GCC policy; draft in preparation (Sep 2026)","source":"S12","rules":{"no_policy":true},"incentives":["Targeted support for frontier tech (AI, semiconductors, space, quantum) expected in the new policy"],"watch":"Nothing to claim today. Negotiate case by case."},{"id":"MH","name":"Maharashtra","status":"GCC Policy 2025 (operating guidelines pending, Nov 2025)","source":"S15","rules":{"excluded_functions":["bpo","call centre","sales"]},"incentives":["Capex subsidy 20% of fixed capital, capped ₹10-100 crore by size","Or rent support 10% (Mumbai/Pune) / 20% (elsewhere) for 5 years","Payroll 40% (Mumbai/Pune) / 50% for 3 years, up to ₹50k per employee and ₹5 crore per unit","Stamp duty 50-100%, electricity duty 100% for 10 years"],"watch":"BPO, call centres and pure sales units are excluded. Guidelines pending."},{"id":"GJ","name":"Gujarat","status":"GCC Policy 2025-30 (effective Feb 2025)","source":"S16","rules":{"min_employees":50},"incentives":["Capex 20% (infra) / 30% (IT), up to ₹50 crore","Opex 15% for 5 years; rent capped at ₹50/sq ft/month","₹50k per male / ₹60k per female employee","EPF 75% (men) / 100% (women) for 5 years"],"watch":"Minimum 50 employees."},{"id":"UP","name":"Uttar Pradesh","status":"GCC Policy 2024 (notified May 2025)","source":"S17","rules":{"min_employees_noida":200,"min_employees_other":100},"incentives":["Land subsidy 30-50%, 100% stamp duty","5% interest subsidy","Opex, payroll, EPF and recruitment subsidies"],"watch":"Thresholds: ₹20 crore or 200 staff in Noida/Ghaziabad; ₹15 crore or 100 staff elsewhere."},{"id":"RJ","name":"Rajasthan","status":"GCC Policy 2025 (to Mar 2029)","source":"S19","rules":{"ownership":["own"],"first_n":10},"incentives":["Capex 30% up to ₹10 crore","Lease 50% up to ₹1 crore","First 10 large GCCs: 30% salary reimbursement for 3 years"],"watch":"Wholly owned units only: BOT and JV setups are excluded. The richest incentives go to the first 10 GCCs."},{"id":"OD","name":"Odisha","status":"GCC Policy 2025 (from Dec 2025)","source":"S20","rules":{"min_employees":50,"parent_rank":["g2000","f1000"]},"incentives":["Capex 30%","Co-working up to ₹6,000 per seat per month","Recruitment ₹30-40k per hire","EPF/ESI 100% for 5 years"],"watch":"Parent must be Fortune 1000 or Forbes G2000, with 50+ staff."},{"id":"TN","name":"Tamil Nadu","status":"No standalone policy; payroll subsidy scheme to Mar 2027 (Budget Feb 2024)","source":"S23","rules":{"dated":true},"incentives":["Payroll subsidy 30% / 20% / 10% over 3 years for new roles above ₹1 lakh a month","Land incentives up to 50%","'GCC One' fast-track desk"],"watch":"Scheme figures date from Feb 2024. Only roles paying over ₹1 lakh a month qualify."},{"id":"HR","name":"Haryana","status":"GCC Policy 2025","source":"S14","rules":{},"incentives":["Land subsidy 30-50%","Capex up to ₹25 crore","Payroll / EPF and stamp duty support"],"watch":"Amounts reported only in secondary coverage."},{"id":"KL","name":"Kerala","status":"Draft policy; 'Keralam GCC Boilerplate' launched Sep 2026","source":"S50","rules":{"no_policy":true},"incentives":["Single framework to simplify setup"],"watch":"Incentive amounts not published."},{"id":"MP","name":"Madhya Pradesh","status":"GCC Policy 2025","source":"S21","rules":{},"incentives":["Capex, payroll, upskilling and R&D support"],"watch":"Amounts not published."},{"id":"AP","name":"Andhra Pradesh","status":"IT & GCC Policy 4.0 (2024-29)","source":"S22","rules":{},"incentives":["Capital, rental, recruitment and power incentives"],"watch":"Operating guidelines to follow; amounts not published."}],"conflicts":[{"id":"X1","question":"How many GCCs are in India?","facts":["F1","F2","F3","F4","F5","F6"],"why":"Mostly definitions and dates. Nasscom-Zinnov counts 2,117 parent companies and 3,728 physical centres in the same report. Brokers count office occupiers. Zinnov's own number jumps from 1,760+ (end-2025) to 2,117 (Mar 2026), which looks like a scope change, not a quarter of growth."},{"id":"X2","question":"How many new GCCs open each year?","facts":["F9","F10","F11","F12","F13"],"why":"Research firms land near 100-110 a year. The Finance Minister's 'nearly one a day' is a speech line, not a count."},{"id":"X3","question":"What is GCC attrition?","facts":["F17","F18"],"why":"Different samples. EY surveys GCC leaders; Zinnov tracks talent data. Plan for the higher figure in AI and cloud roles."},{"id":"X4","question":"What share of office leasing do GCCs take?","facts":["F19","F20","F21"],"why":"Each broker uses its own city set and decides differently whether flex seats used by GCCs count as GCC leasing."},{"id":"X5","question":"How many GCCs are in Bengaluru?","facts":["F33","F34","F35"],"why":"487 counts companies; 880+ and 900+ count centres."},{"id":"X6","question":"How many GCCs are in Hyderabad?","facts":["F40","F41","F42"],"why":"The state government counts 515; Zinnov counts 355+ centres at end-2025. Different dates and different definitions of a GCC."},{"id":"X7","question":"What does an EOR cost per employee?","facts":["F27","F28"],"why":"Both are vendors quoting their own prices. The gap is what an entrant has to negotiate blind."},{"id":"X8","question":"How long does setup take?","facts":["F24","F25","F26"],"why":"It depends on the model: EOR/BOT gets first hires in weeks, your own entity takes months. Every figure here comes from a firm that sells setup."},{"id":"X9","question":"How many mid-market GCCs are there?","facts":["F15","F16"],"why":"Two vintages of the same series: 480+ (Apr 2025) and 583 (Mar 2026)."}],"gccs":[{"name":"Costco","sector":"Retail","city":"hyderabad","status":"Announced","detail":"Technology, research and digital operations; 1,000+ professionals initial target","source":"S38","as_of":"2026-03"},{"name":"Eli Lilly","sector":"Pharma","city":"hyderabad","status":"Announced","detail":"AI, automation, software engineering; up to 1,500 people by 2026-27","source":"S38","as_of":"2026-03"},{"name":"Sanofi","sector":"Pharma","city":"hyderabad","status":"Expanding","detail":"€400 million investment; 2,600+ employees by 2026","source":"S38","as_of":"2026-03"},{"name":"HCA Healthcare","sector":"Healthcare","city":"hyderabad","status":"Announced","detail":"Hospital operations and healthcare technology; US$75 million investment","source":"S38","as_of":"2026-03"},{"name":"L'Oréal","sector":"Consumer goods","city":"hyderabad","status":"Announced","detail":"One of its largest global GCCs","source":"S38","as_of":"2026-03"},{"name":"Johnson & Johnson","sector":"Healthcare","city":"hyderabad","status":"Announced","detail":"Global healthcare operations, digital and enterprise support","source":"S38","as_of":"2026-03"},{"name":"Western Union (2nd centre)","sector":"Financial services","city":"hyderabad","status":"Announced","detail":"Platform engineering; BOT model with HCLTech; 400+ professionals","source":"S39","as_of":"2026"},{"name":"Qualcomm","sector":"Semiconductors","city":"bengaluru","status":"Leased","detail":"2.56 lakh sq ft at Bagmane Constellation, ORR, at ₹113/sq ft/month","source":"S25","as_of":"2025"}],"providers":[{"name":"ANSR","category":"Setup & BOT","claim":"Says it has set up 170 GCCs; plans 200 more in five years. MoU with Tamil Nadu.","source":"S41"},{"name":"Bhartiya Converge","category":"Real estate & enablement","claim":"Launched in Apr 2025 as a GCC enablement platform.","source":"S49"},{"name":"Cushman & Wakefield","category":"Real estate","claim":"GCC advisory practice offering services à la carte.","source":"S46"},{"name":"Deloitte India + Embark","category":"Advisory + operations","claim":"Alliance (Aug 2025): Deloitte on strategy, entity and tax; Embark on facilities and operations. Targets mid-market firms.","source":"S43"},{"name":"GoodWorks (Sansovi)","category":"GCC-as-a-service","claim":"MoU with KDEM (Karnataka, Aug 2026) targeting 50 new GCCs.","source":"S45"},{"name":"Inductus","category":"Setup & BOT","claim":"BOT, company-owned partner-operated and modular models. MoU with Gujarat DST (Apr 2026) for mid-sized MNCs.","source":"S42"},{"name":"JLL + Aeka Advisors","category":"Real estate + advisory","claim":"Partnership to serve global companies setting up GCCs.","source":"S47"},{"name":"Quess (Origint)","category":"Staffing & workplace","claim":"Division launched Jun 2025: workforce, workplace and workload as a service.","source":"S44"},{"name":"TeamLease","category":"Staffing","claim":"Partnership with Invest UP on GCC talent.","source":"S48"},{"name":"Wisemonk","category":"EOR","claim":"EOR from US$99 per employee per month (its own published price).","source":"S34"},{"name":"Zinnov","category":"Advisory & research","claim":"Publishes the Nasscom-Zinnov GCC landscape and sells setup advisory.","source":"S1"}],"assumptions":{"sqft_per_seat":{"value":100,"label":"100 sq ft per seat (Kosh planning assumption, not sourced)"},"statutory_load":{"value":0.125,"label":"Statutory benefits add 10-15% to salary (vendor estimate, S32); midpoint 12.5%","source":"S32"},"salary_proxy":{"label":"Software engineer median used as the average cost per head. Real mixes vary a lot by role and seniority.","source":"S28"},"rent_fallback":{"low":50,"high":100,"label":"Grade A tier-1 rent ₹50-100/sq ft/month (vendor estimate, S32) where no city figure exists","source":"S32"},"inr_per_usd":{"value":88,"label":"₹88 per US$ (Kosh planning rate)"}}}</script>
+<script>
+(function(){
+"use strict";
+var D = JSON.parse(document.getElementById("kosh-data").textContent);
+var FACT = {}, SRC = {}, CONF_OF = {}, CITY = {}, STATE = {};
+D.facts.forEach(function(f){FACT[f.id]=f;});
+D.sources.forEach(function(s){SRC[s.id]=s;});
+D.conflicts.forEach(function(x){x.facts.forEach(function(id){CONF_OF[id]=x.id;});});
+D.cities.forEach(function(c){CITY[c.id]=c;});
+D.states.forEach(function(s){STATE[s.id]=s;});
+var A = D.assumptions;
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function $(sel,el){return (el||document).querySelector(sel);}
+function find(subject,metric){return D.facts.filter(function(f){return f.subject===subject&&f.metric===metric;});}
+function first(subject,metric){return find(subject,metric)[0]||null;}
+function factStatus(f){
+  if(CONF_OF[f.id]) return "conflict";
+  var s=SRC[f.source]; if(!s) return "stale";
+  if(s.kind==="vendor") return "stale";
+  var y=parseInt(String(f.as_of).slice(0,4),10), m=parseInt(String(f.as_of).slice(5,7)||"6",10);
+  var months=(2026-y)*12+(10-m); if(months>12) return "stale";
+  return "sourced";
+}
+var STATUS_WORD={sourced:"Sourced",conflict:"Sources disagree",stale:"Single source or dated",verified:"Verified"};
+function dot(fid){var f=FACT[fid]; if(!f) return ""; var st=factStatus(f); var s=SRC[f.source];
+  return '<button class="dot dot--'+st+'" data-fact="'+fid+'" aria-label="'+esc(STATUS_WORD[st]+": "+(s?s.publisher:"")+", "+f.as_of)+'" title="'+esc((s?s.publisher:"")+" · "+f.as_of)+'"></button>';}
+function srcDot(sid){var s=SRC[sid]; if(!s) return ""; return '<button class="dot'+(s.kind==="vendor"?" dot--stale":"")+'" data-src="'+sid+'" aria-label="Source: '+esc(s.publisher)+'" title="'+esc(s.publisher+" · "+s.date)+'"></button>';}
+function srcLine(fid){var f=FACT[fid]; if(!f) return ""; var s=SRC[f.source]; return esc(s.publisher)+" · "+esc(f.as_of)+(f.definition?" · "+esc(f.definition):"");}
+function fmtVal(f){ if(typeof f.value==="number"){ return f.value.toLocaleString("en-IN"); } return esc(f.value); }
+function safeGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function safeSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+
+/* ---------- plan state ---------- */
+var EXAMPLE_PLAN={company:"Nordlicht Health (example)",revenue:"100m-1b",rank:"other",functions:["engineering","data"],y1:60,y3:150,model:"eor",cities:["bengaluru","hyderabad","pune","chennai"],timeline:"First hires by Q2 2027",notes:"PE-backed US health-tech firm. Wants an engineering and data team, then own entity once past ~75 people."};
+var plan=JSON.parse(JSON.stringify(EXAMPLE_PLAN)); var planIsExample=true;
+try{var saved=safeGet("kosh-plan"); if(saved){plan=JSON.parse(saved); planIsExample=!!plan._example;}}catch(e){}
+function savePlan(){safeSet("kosh-plan",JSON.stringify(plan));}
+var FUNCS=[["engineering","Engineering"],["data","Data & AI"],["finance","Finance & accounting"],["operations","Operations"],["support","Customer support / BPO"],["sales","Sales"]];
+var MODEL_SHORT={eor:"an EOR, own entity later",bot:"a BOT partner",own:"its own entity"};
+var MODELS=[["eor","Start on an EOR, own entity later"],["bot","Build-operate-transfer (BOT) partner"],["own","Own entity from day one"]];
+var RANKS=[["g2000","Forbes Global 2000"],["f1000","Fortune 1000"],["other","Neither"]];
+var REVS=[["lt100m","Under US$100M"],["100m-1b","US$100M to 1B"],["gt1b","Over US$1B"]];
+function label(list,v){for(var i=0;i<list.length;i++) if(list[i][0]===v) return list[i][1]; return v;}
+
+/* ---------- cost model ---------- */
+function rentFor(cityId){
+  if(cityId==="hyderabad"){var f=first("hyderabad","Office rent, SBD"); return {lo:70,hi:95,fid:f&&f.id,note:"Hyderabad SBD range"};}
+  if(cityId==="bengaluru"){var g=first("bengaluru","Office rent (single transaction)"); return {lo:A.rent_fallback.low,hi:113,fid:g&&g.id,note:"Tier-1 range up to a recorded ORR deal at ₹113"};}
+  var fb=first("india","Grade A office rent, tier-1 cities");
+  if(CITY[cityId]&&CITY[cityId].tier===2) return null;
+  return {lo:A.rent_fallback.low,hi:A.rent_fallback.high,fid:fb&&fb.id,note:"No city figure; tier-1 vendor range"};
+}
+function costFor(cityId,p){
+  var sal=first(cityId,"Software engineer median salary"); var rent=rentFor(cityId);
+  if(!sal||!rent) return null;
+  var heads=Math.max(1,Number(p.y1)||1);
+  var payroll=heads*sal.num*(1+A.statutory_load.value)/100; // ₹ crore
+  var sqft=heads*A.sqft_per_seat.value;
+  var rentLo=sqft*rent.lo*12/1e7, rentHi=sqft*rent.hi*12/1e7;
+  var eorLo=0,eorHi=0;
+  if(p.model==="eor"){eorLo=heads*99*12*A.inr_per_usd.value/1e7; eorHi=heads*599*12*A.inr_per_usd.value/1e7;}
+  return {sal:sal,rent:rent,payroll:payroll,rentLo:rentLo,rentHi:rentHi,eorLo:eorLo,eorHi:eorHi,lo:payroll+rentLo+eorLo,hi:payroll+rentHi+eorHi};
+}
+function cr(n){return "₹"+(n>=10?n.toFixed(0):n.toFixed(1))+" cr";}
+function usdm(n){return "US$"+(n*1e7/A.inr_per_usd.value/1e6).toFixed(1)+"M";}
+
+/* ---------- incentive engine ---------- */
+function evalState(st,p,cityId){
+  var r=st.rules||{}, reasons=[], verdict="likely";
+  function down(v){var order={likely:0,check:1,no:2,none:3}; if(order[v]>order[verdict]) verdict=v;}
+  if(r.no_policy){ return {verdict:"none",reasons:["No notified GCC policy to claim from today. "+st.watch]}; }
+  if(r.ownership && p.model!=="own"){ down("no"); reasons.push("Only wholly owned units qualify. Your plan uses "+(p.model==="bot"?"a BOT partner":"an EOR")+"."); }
+  if(r.min_employees){ if(p.y1<r.min_employees && p.y3>=r.min_employees){down("check"); reasons.push("Needs "+r.min_employees+"+ employees. You reach that in year 3, not year 1.");} else if(p.y3<r.min_employees){down("no"); reasons.push("Needs "+r.min_employees+"+ employees; your plan stays below that.");} }
+  if(r.min_employees_noida){ var th=(cityId==="ncr")?r.min_employees_noida:r.min_employees_other; if(p.y3<th){down("check"); reasons.push("Needs "+th+" staff (or a capital threshold) in "+(cityId==="ncr"?"Noida/Ghaziabad":"UP outside Noida")+". Your year-3 plan is "+p.y3+".");} }
+  if(r.parent_rank && r.parent_rank.indexOf(p.rank)<0){ down("no"); reasons.push("Parent must be Fortune 1000 or Forbes G2000."); }
+  if(r.excluded_functions){ var bad=p.functions.filter(function(f){return f==="support"||f==="sales";}); if(bad.length){ down(p.functions.length===bad.length?"no":"check"); reasons.push("BPO, call-centre and pure sales units are excluded. Keep those functions out of the claiming unit."); } }
+  if(r.first_n){ down("check"); reasons.push("The richest incentives go to the first "+r.first_n+" large GCCs. Ask the state how many slots are left."); }
+  if(r.dated){ down("check"); reasons.push("Scheme figures date from Feb 2024 and run to Mar 2027. Confirm they still apply."); }
+  if(st.id==="KA" && cityId==="bengaluru"){ reasons.push("The 'Beyond Bengaluru' package does not apply inside Bengaluru."); }
+  if(p.model==="eor" && verdict!=="no"){ down("check"); reasons.push("On an EOR your staff sit on the provider's payroll. Incentives are normally claimed by your own registered unit, so count on them only after you incorporate. (Kosh reading of the policies, not legal advice.)"); }
+  if(st.status.indexOf("not verified")>=0||st.status.indexOf("pending")>=0){ down("check"); reasons.push(st.watch); }
+  reasons=reasons.filter(function(v,i,a){return a.indexOf(v)===i;});
+  if(!reasons.length) reasons.push("Your plan meets the published thresholds.");
+  return {verdict:verdict,reasons:reasons};
+}
+function statesFor(cityId){var c=CITY[cityId]; var out=[STATE[c.state]]; if(c.alt_state) out.push(STATE[c.alt_state]); return out.filter(Boolean);}
+var VERDICT={likely:["chip--ok","Likely eligible"],check:["chip--warn","Check first"],no:["chip--no","Not eligible"],none:["chip--none","No policy yet"]};
+function verdictChip(v){var x=VERDICT[v]; return '<span class="chip '+x[0]+'">'+x[1]+'</span>';}
+function bestVerdict(cityId,p){var order={likely:0,check:1,none:2,no:3},best=null; statesFor(cityId).forEach(function(st){var e=evalState(st,p,cityId); if(!best||order[e.verdict]<order[best.verdict]) best={verdict:e.verdict,state:st,e:e};}); return best;}
+
+/* ---------- routing ---------- */
+var VIEWS=[["plan","Your plan"],["cities","Compare cities"],["incentives","Incentives"],["ask","Ask Kosh"],["conflicts","Where sources disagree"],["providers","Providers"],["brief","Decision brief"],["sources","Sources"]];
+var view="plan"; var h=(location.hash||"").replace("#",""); VIEWS.forEach(function(v){if(v[0]===h) view=h;});
+function navHTML(){return VIEWS.map(function(v){var n=v[0]==="conflicts"?D.conflicts.length:(v[0]==="sources"?D.sources.length:(v[0]==="providers"?D.providers.length:"")); return '<button data-view="'+v[0]+'"'+(v[0]===view?' aria-current="page"':'')+'><span>'+v[1]+'</span>'+(n!==""?'<span class="n">'+n+'</span>':'')+'</button>';}).join("");}
+function go(v){view=v; try{history.replaceState(null,"","#"+v);}catch(e){} render(); window.scrollTo(0,0);}
+document.addEventListener("click",function(ev){
+  var b=ev.target.closest("[data-view]"); if(b){go(b.getAttribute("data-view")); return;}
+  var d=ev.target.closest("[data-fact]"); if(d){openFact(d.getAttribute("data-fact")); return;}
+  var s=ev.target.closest("[data-src]"); if(s){openSource(s.getAttribute("data-src")); return;}
+  var x=ev.target.closest("[data-conflict]"); if(x){go("conflicts"); setTimeout(function(){var el=document.getElementById(x.getAttribute("data-conflict")); if(el) el.scrollIntoView({block:"start"});},30); return;}
+  if(ev.target.closest(".scrim")||ev.target.closest("[data-close]")) closeDrawer();
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape") closeDrawer();});
+window.addEventListener("hashchange",function(){var h=(location.hash||"").replace("#",""); VIEWS.forEach(function(v){if(v[0]===h&&h!==view){view=h; render();}});});
+
+/* ---------- drawer ---------- */
+function closeDrawer(){$("#drawerRoot").innerHTML="";}
+function openFact(fid){var f=FACT[fid]; if(!f) return; var s=SRC[f.source]; var st=factStatus(f); var x=CONF_OF[fid];
+  $("#drawerRoot").innerHTML='<div class="scrim"></div><aside class="drawer fade" role="dialog" aria-label="Source"><div class="row" style="justify-content:space-between"><span class="eyebrow">'+esc(STATUS_WORD[st])+'</span><button class="btn btn--quiet" data-close>Close</button></div>'+
+  '<div class="muted small">'+esc(f.metric)+(f.subject!=="india"?" · "+esc(CITY[f.subject]?CITY[f.subject].name:f.subject):" · India")+'</div><div class="v">'+fmtVal(f)+' <span class="small muted" style="font-family:var(--sans)">'+esc(f.unit)+'</span></div>'+
+  (f.definition?'<p class="small"><b>Counts:</b> '+esc(f.definition)+'</p>':'')+
+  '<div class="card stack" style="padding:16px;gap:6px"><div class="src">'+esc(s.kind.toUpperCase())+' · '+esc(s.date)+'</div><h3>'+esc(s.title)+'</h3><div class="small">'+esc(s.publisher)+'</div>'+(s.sells_services?'<div class="small" style="color:var(--conflict)">Interest to declare: '+esc(s.sells_services)+'</div>':'<div class="small muted">No GCC services sold by this source.</div>')+'<a class="small" href="'+esc(s.url)+'" target="_blank" rel="noopener">Open the source</a></div>'+
+  (x?'<button class="btn" data-conflict="'+x+'">See the disagreement</button>':'')+
+  '<p class="small muted">Fact '+fid+'. Kosh stores the figure exactly as the source states it, with its date and definition.</p></aside>';
+  var c=$(".drawer [data-close]"); if(c) c.focus();
+}
+function openSource(sid){var s=SRC[sid]; if(!s) return; var used=D.facts.filter(function(f){return f.source===sid;});
+  $("#drawerRoot").innerHTML='<div class="scrim"></div><aside class="drawer fade" role="dialog" aria-label="Source"><div class="row" style="justify-content:space-between"><span class="eyebrow">Source '+sid+'</span><button class="btn btn--quiet" data-close>Close</button></div><h2>'+esc(s.title)+'</h2><div class="src">'+esc(s.publisher)+' · '+esc(s.date)+' · '+esc(s.kind)+'</div>'+(s.sells_services?'<div class="small" style="color:var(--conflict)">Interest to declare: '+esc(s.sells_services)+'</div>':'')+'<a class="small" href="'+esc(s.url)+'" target="_blank" rel="noopener">Open the source</a><div class="stack" style="gap:8px">'+(used.length?'<div class="eyebrow">Figures Kosh takes from it</div>'+used.map(function(f){return '<div class="small">'+esc(f.metric)+': <b class="mono">'+fmtVal(f)+'</b> '+esc(f.unit)+'</div>';}).join(""):'<div class="small muted">Used for policy text, providers or announcements.</div>')+'</div></aside>';
+  var c=$(".drawer [data-close]"); if(c) c.focus();
+}
+
+/* ---------- views ---------- */
+function exampleBanner(){return planIsExample?'<div class="banner"><span class="dot" style="cursor:default;margin:3px 0 0"></span><div>This is an <b>example plan</b> for a fictional mid-market company so you can see Kosh working. Change any field, or describe your own plan and let Kosh read it.</div></div>':'';}
+function vPlan(){
+  var p=plan;
+  var cities=D.cities.map(function(c){return '<label><input type="checkbox" name="city" value="'+c.id+'"'+(p.cities.indexOf(c.id)>=0?" checked":"")+'> '+esc(c.name)+'</label>';}).join("");
+  var funcs=FUNCS.map(function(f){return '<label><input type="checkbox" name="func" value="'+f[0]+'"'+(p.functions.indexOf(f[0])>=0?" checked":"")+'> '+f[1]+'</label>';}).join("");
+  function sel(id,list,v){return '<select id="'+id+'">'+list.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===v?" selected":"")+'>'+o[1]+'</option>';}).join("")+'</select>';}
+  var ranked=p.cities.map(function(c){return {c:c,cost:costFor(c,p),v:bestVerdict(c,p)};});
+  var priced=ranked.filter(function(r){return r.cost;}).sort(function(a,b){return a.cost.lo-b.cost.lo;});
+  var cheapest=priced[0];
+  var g=first("india","GCC count");
+  return '<div class="eyebrow">Step 1 · Your plan</div><h1>Set up in India on facts, not referrals.</h1><p class="lede">Tell Kosh what you want to build. It compares cities, checks which state incentives you can actually claim, and shows you where the published numbers disagree, with a source on every figure.</p>'+
+  '<div class="section">'+exampleBanner()+
+  '<div class="card stack"><h2>Describe your plan</h2><p class="small muted">Write it the way you would explain it to a colleague. Kosh fills in the form below.</p><textarea id="planText" placeholder="e.g. We are a US$300M fintech, PE-backed. We want 40 engineers and 10 finance people in India next year, 120 by year three. Probably through an EOR first. Looking at Pune and Hyderabad.">'+(planIsExample?esc(EXAMPLE_PLAN.notes):"")+'</textarea><div class="row"><button class="btn btn--primary" id="readPlan">Read my plan</button><span class="thinking" id="planStatus"></span></div></div>'+
+  '<div class="card stack"><h2>Plan details</h2><div class="formgrid">'+
+  '<label class="f">Company<input type="text" id="pCompany" value="'+esc(p.company)+'"></label>'+
+  '<label class="f">Parent revenue'+sel("pRev",REVS,p.revenue)+'</label>'+
+  '<label class="f">Parent ranking'+sel("pRank",RANKS,p.rank)+'</label>'+
+  '<label class="f">Operating model'+sel("pModel",MODELS,p.model)+'</label>'+
+  '<label class="f">Headcount, year 1<input type="number" id="pY1" min="1" max="20000" value="'+esc(p.y1)+'"></label>'+
+  '<label class="f">Headcount, year 3<input type="number" id="pY3" min="1" max="50000" value="'+esc(p.y3)+'"></label>'+
+  '<label class="f">Timeline<input type="text" id="pTime" value="'+esc(p.timeline)+'"></label>'+
+  '</div><div class="stack" style="gap:8px"><div class="small" style="font-weight:500">Functions</div><div class="checks">'+funcs+'</div></div><div class="stack" style="gap:8px"><div class="small" style="font-weight:500">Cities to compare</div><div class="checks">'+cities+'</div></div><div class="row"><button class="btn" id="savePlan">Update results</button><button class="btn btn--quiet" id="resetPlan">Load the example again</button></div></div>'+
+  '<div class="stack"><h2>What Kosh sees for this plan</h2><div class="kpis">'+
+  '<div class="kpi"><div class="small muted">Cities compared</div><div class="v">'+p.cities.length+'</div><div class="src">'+priced.length+' with enough data to price</div></div>'+
+  (cheapest?'<div class="kpi"><div class="small muted">Lowest year-1 run cost</div><div class="v">'+cr(cheapest.cost.lo)+'</div><div class="src">'+esc(CITY[cheapest.c].name)+' · estimate, see assumptions</div></div>':'')+
+  '<div class="kpi"><div class="small muted">Cities with a claimable incentive</div><div class="v">'+ranked.filter(function(r){return r.v&&r.v.verdict==="likely";}).length+' <span class="small muted" style="font-family:var(--sans)">of '+ranked.length+'</span></div><div class="src">'+ranked.filter(function(r){return r.v&&r.v.verdict==="check";}).length+' more need checking</div></div>'+
+  (g?'<div class="kpi"><div class="small muted">GCCs already in India</div><div class="v">'+fmtVal(g)+dot(g.id)+'</div><div class="src">Sources disagree: 1,700 to 2,117</div></div>':'')+
+  '</div><div class="row"><button class="btn btn--primary" data-view="cities">Compare cities</button><button class="btn" data-view="incentives">Check incentives</button><button class="btn" data-view="brief">Build my decision brief</button></div></div></div>';
+}
+function readForm(){
+  plan.company=$("#pCompany").value.trim()||"My company"; plan.revenue=$("#pRev").value; plan.rank=$("#pRank").value; plan.model=$("#pModel").value;
+  plan.y1=Math.max(1,parseInt($("#pY1").value,10)||1); plan.y3=Math.max(plan.y1,parseInt($("#pY3").value,10)||plan.y1); plan.timeline=$("#pTime").value;
+  plan.functions=[].slice.call(document.querySelectorAll('input[name=func]:checked')).map(function(i){return i.value;});
+  plan.cities=[].slice.call(document.querySelectorAll('input[name=city]:checked')).map(function(i){return i.value;});
+  if(!plan.cities.length) plan.cities=["bengaluru"];
+  planIsExample=false; plan._example=false; savePlan();
+}
+function vCities(){
+  var p=plan; var rows=p.cities.map(function(cid){
+    var c=CITY[cid], cost=costFor(cid,p), counts=find(cid,"GCC count"), sal=first(cid,"Software engineer median salary"), att=first(cid,"ER&D voluntary attrition"), v=bestVerdict(cid,p);
+    var countCell=counts.length?counts.map(function(f){return '<div><span class="mono">'+fmtVal(f)+'</span>'+dot(f.id)+' <span class="src">'+esc(f.definition||"")+'</span></div>';}).join(""):'<span class="muted small">No verified count yet</span>';
+    var costCell=cost?'<div class="big">'+cr(cost.lo)+' to '+cr(cost.hi)+'</div><div class="src">'+usdm(cost.lo)+' to '+usdm(cost.hi)+' · year 1, '+p.y1+' people</div>':'<span class="muted small">Not enough data to price. Kosh has no verified salary or rent figure for '+esc(c.name)+'.</span>';
+    return {cid:cid,cost:cost,html:'<tr><td class="city">'+esc(c.name)+'<div class="src">Tier '+c.tier+' · '+statesFor(cid).map(function(s){return esc(s.name);}).join(" / ")+'</div></td>'+
+    '<td>'+costCell+'</td>'+
+    '<td>'+(sal?'<span class="big">₹'+sal.num+'L</span>'+dot(sal.id):'<span class="muted small">No figure</span>')+'</td>'+
+    '<td>'+(cost?'<span class="mono">₹'+cost.rent.lo+(cost.rent.hi!==cost.rent.lo?"-"+cost.rent.hi:"")+'</span>'+dot(cost.rent.fid)+'<div class="src">'+esc(cost.rent.note)+'</div>':'<span class="muted small">No figure</span>')+'</td>'+
+    '<td>'+(att?'<span class="mono">'+att.num+'%</span>'+dot(att.id):'<span class="muted small">No city figure</span>')+'</td>'+
+    '<td>'+countCell+'</td>'+
+    '<td>'+(v?verdictChip(v.verdict)+'<div class="src" style="margin-top:6px">'+esc(v.state.name)+'</div>':'')+'</td></tr>'};
+  });
+  var maxHi=Math.max.apply(null,rows.filter(function(r){return r.cost;}).map(function(r){return r.cost.hi;}).concat([1]));
+  var bars=rows.filter(function(r){return r.cost;}).sort(function(a,b){return a.cost.lo-b.cost.lo;}).map(function(r){var lo=r.cost.lo/maxHi*100, hi=r.cost.hi/maxHi*100;
+    return '<div class="barrow"><div class="small" style="font-weight:600">'+esc(CITY[r.cid].name)+'</div><div class="bar" aria-hidden="true"><i style="left:'+lo.toFixed(1)+'%;width:'+Math.max(1.5,hi-lo).toFixed(1)+'%"></i><i style="left:0;width:'+lo.toFixed(1)+'%;background:var(--line-strong);opacity:.35"></i></div><div class="mono small">'+cr(r.cost.lo)+' to '+cr(r.cost.hi)+'</div></div>';}).join("");
+  return '<div class="eyebrow">Step 2 · Compare cities</div><h1>What each city costs you, and how sure we are.</h1><p class="lede">Year-one run cost for '+esc(plan.company)+': '+plan.y1+' people through '+esc(MODEL_SHORT[plan.model])+'. Click any dot to see where a number came from.</p>'+
+  '<div class="section"><div class="legend"><span><i class="dot"></i>Sourced</span><span><i class="dot dot--conflict"></i>Sources disagree</span><span><i class="dot dot--stale"></i>Single source, vendor or dated</span></div>'+
+  '<div class="card stack"><h2>Year-one run cost</h2><p class="small muted">Payroll plus office'+(plan.model==="eor"?" plus EOR fees":"")+'. The bar spans the low and high estimate; a long bar means the inputs are uncertain.</p>'+(bars||'<p class="muted small">None of the selected cities has enough data to price.</p>')+'</div>'+
+  '<div class="tablewrap"><table><thead><tr><th>City</th><th>Year-1 run cost</th><th>Engineer median pay</th><th>Office rent ₹/sq ft/mo</th><th>Attrition (ER&amp;D)</th><th>GCCs there</th><th>Incentives for you</th></tr></thead><tbody>'+rows.map(function(r){return r.html;}).join("")+'</tbody></table></div>'+
+  '<div class="card stack" style="gap:8px"><h3>How the cost is worked out</h3><ul class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px"><li>'+esc(A.salary_proxy.label)+' '+srcDot(A.salary_proxy.source)+'</li><li>'+esc(A.statutory_load.label)+' '+srcDot(A.statutory_load.source)+'</li><li>'+esc(A.sqft_per_seat.label)+'</li><li>'+esc(A.rent_fallback.label)+' '+srcDot(A.rent_fallback.source)+'</li>'+(plan.model==="bot"?'<li>BOT partner fees are not included: no source publishes them. Ask for them in writing.</li>':'')+(plan.model==="eor"?'<li>EOR fees US$99 to 599 per person per month: the low and high published vendor prices '+srcDot("S34")+srcDot("S33")+'</li>':'')+'<li>'+esc(A.inr_per_usd.label)+'. Fit-out, IT, recruitment fees and travel are not included.</li></ul></div></div>';
+}
+function vIncentives(){
+  var p=plan, seen={}, blocks=[];
+  p.cities.forEach(function(cid){statesFor(cid).forEach(function(st){ if(seen[st.id]) return; seen[st.id]=1; var e=evalState(st,p,cid);
+    blocks.push('<div class="card stack fade"><div class="row" style="justify-content:space-between"><div><h2>'+esc(st.name)+'</h2><div class="src">'+esc(st.status)+' '+srcDot(st.source)+'</div></div>'+verdictChip(e.verdict)+'</div>'+
+    '<div class="stack" style="gap:6px"><div class="eyebrow">Why</div><ul class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">'+e.reasons.map(function(r){return '<li>'+esc(r)+'</li>';}).join("")+'</ul></div>'+
+    '<div class="stack" style="gap:6px"><div class="eyebrow">What the policy offers</div><ul class="small muted" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px">'+st.incentives.map(function(i){return '<li>'+esc(i)+'</li>';}).join("")+'</ul></div></div>');});});
+  var others=D.states.filter(function(s){return !seen[s.id];});
+  return '<div class="eyebrow">Step 3 · Incentives</div><h1>Which incentives you can actually claim.</h1><p class="lede">State GCC policies are written as legal PDFs with thresholds that quietly rule many companies out. Kosh checks your plan against each rule and tells you why.</p>'+
+  '<div class="section"><div class="banner">This is a screening of published policy terms, not legal or tax advice. Confirm with the state nodal agency before you count on any incentive.</div><div class="grid2">'+blocks.join("")+'</div>'+
+  '<div class="card stack" style="gap:8px"><h3>Other states Kosh tracks</h3><div class="row">'+others.map(function(s){var e=evalState(s,p,null); return '<span class="chip">'+esc(s.name)+' · '+VERDICT[e.verdict][1]+'</span>';}).join("")+'</div><p class="small muted">Add a city in that state to your plan to see the reasons.</p></div></div>';
+}
+/* ---------- Ask Kosh ---------- */
+var chat=[]; var asking=null;
+function datasetForPrompt(){
+  return JSON.stringify({
+    facts:D.facts.map(function(f){return [f.id,f.subject,f.metric,f.value,f.unit,f.source,f.as_of,f.definition||""];}),
+    sources:D.sources.map(function(s){return [s.id,s.publisher,s.date,s.kind,s.sells_services||""];}),
+    states:D.states.map(function(s){return {id:s.id,name:s.name,status:s.status,source:s.source,incentives:s.incentives,watch:s.watch};}),
+    conflicts:D.conflicts.map(function(x){return {id:x.id,q:x.question,facts:x.facts,why:x.why};}),
+    gccs:D.gccs,providers:D.providers.map(function(p){return {name:p.name,category:p.category,claim:p.claim,source:p.source};}),
+    assumptions:A});
+}
+function planSummary(){var rows=plan.cities.map(function(cid){var c=costFor(cid,plan), v=bestVerdict(cid,plan); return CITY[cid].name+": "+(c?("year-1 cost "+cr(c.lo)+" to "+cr(c.hi)):"not enough data to price")+"; incentives: "+(v?VERDICT[v.verdict][1]+" ("+v.state.name+")":"n/a");}).join("\n");
+  return "Company: "+plan.company+"; parent revenue "+label(REVS,plan.revenue)+"; ranking "+label(RANKS,plan.rank)+"; model "+label(MODELS,plan.model)+"; headcount "+plan.y1+" in year 1, "+plan.y3+" in year 3; functions "+plan.functions.join(", ")+"; timeline "+plan.timeline+".\nKosh's computed comparison:\n"+rows;}
+var RULES="You are Kosh, a neutral record of India's Global Capability Centre (GCC) ecosystem. Answer the user's question using ONLY the dataset below and the user's plan.\nRules:\n- Every figure you state must be followed by its fact id in square brackets, like [F12]. Cite states as [S:KA] style is NOT allowed; cite the state's source id instead, like [S16]. Cite a disagreement as [X3].\n- When sources disagree, give the range and say why (from the conflict's explanation). Do not pick a winner silently.\n- If the dataset does not contain the answer, say plainly that Kosh has no verified figure for it, and name what kind of source would settle it. Never use outside knowledge for numbers.\n- When a source sells GCC services, mention it if it matters to the answer.\n- Never rank, recommend or praise a service provider. You may list providers and their public claims, alphabetically.\n- Write plainly: short sentences, no headings, at most 170 words. Use '- ' bullets only for lists of 3+ items. No preamble.\n\nDATASET (facts are [id, subject, metric, value, unit, source, as_of, definition]):\n";
+function renderAnswer(text){
+  var t=esc(text);
+  t=t.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+  t=t.replace(/\[((?:F|S|X)\d+(?:\s*,\s*(?:F|S|X)\d+)*)\]/g,function(m,ids){return ids.split(/\s*,\s*/).map(function(id){
+    if(id[0]==="F"&&FACT[id]) return '<button class="cite" data-fact="'+id+'">'+id+'</button>';
+    if(id[0]==="S"&&SRC[id]) return '<button class="cite" data-src="'+id+'">'+id+'</button>';
+    if(id[0]==="X") return '<button class="cite" data-conflict="'+id+'">'+id+'</button>';
+    return '<span class="cite" title="Not in the dataset">'+id+'?</span>';}).join("");});
+  var lines=t.split(/\n/), out=[], inList=false;
+  lines.forEach(function(l){ if(/^\s*[-•]\s+/.test(l)){ if(!inList){out.push("<ul>");inList=true;} out.push("<li>"+l.replace(/^\s*[-•]\s+/,"")+"</li>"); } else { if(inList){out.push("</ul>");inList=false;} if(l.trim()) out.push("<p>"+l+"</p>"); } });
+  if(inList) out.push("</ul>"); return out.join("");
+}
+function offlineAnswer(q){var words=q.toLowerCase().split(/[^a-z0-9]+/).filter(function(w){return w.length>3;});
+  var hits=D.facts.filter(function(f){var hay=(f.metric+" "+f.subject+" "+(CITY[f.subject]?CITY[f.subject].name:"")+" "+f.definition).toLowerCase(); return words.some(function(w){return hay.indexOf(w)>=0;});}).slice(0,6);
+  if(!hits.length) return "Kosh's assistant is not available in this view, and no stored figure matches those words. Try the city comparison or the list of disagreements.";
+  return "Kosh's assistant is not available in this view. These stored figures match your question:\n"+hits.map(function(f){return "- "+f.metric+(f.subject!=="india"?" ("+(CITY[f.subject]?CITY[f.subject].name:f.subject)+")":"")+": "+(typeof f.value==="number"?f.value.toLocaleString("en-IN"):f.value)+" "+f.unit+" ["+f.id+"]";}).join("\n");}
+var SUGGEST=["How many GCCs are really in India?","Pune or Hyderabad for a 60-person engineering team?","Can we claim Rajasthan's incentives through a BOT partner?","What does attrition look like, and which number should I plan with?","What's office rent in Kochi?","Who sets up GCCs for mid-market companies?"];
+function vAsk(){
+  var msgs=chat.map(function(m){return '<div class="msg '+m.role+'"><div class="who">'+(m.role==="user"?"You":"Kosh")+'</div><div class="body answer">'+(m.role==="user"?"<p>"+esc(m.content)+"</p>":renderAnswer(m.content))+(m.note?'<p class="small muted">'+esc(m.note)+'</p>':'')+'</div></div>';}).join("");
+  return '<div class="eyebrow">Ask Kosh</div><h1>Ask anything. Get a sourced answer, or an honest "we don\'t know".</h1><p class="lede">Kosh answers only from its dataset and your plan. Every figure links to its source; where sources disagree, you see the range and the reason.</p>'+
+  '<div class="section"><div class="row">'+SUGGEST.map(function(s){return '<button class="chip" data-suggest="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div>'+
+  '<div id="msgs">'+msgs+'<div id="live"></div></div>'+
+  '<form class="askbar" id="askForm"><label for="askBox" class="f" style="flex:1"><span class="h" style="position:absolute;left:-9999px">Your question</span><textarea id="askBox" placeholder="Ask about cities, incentives, costs, counts or providers"></textarea></label><button class="btn btn--primary" id="askBtn" type="submit">Ask</button><button class="btn" id="stopBtn" type="button" hidden>Stop</button></form><p class="small muted">Answers use your Claude account. Kosh sends the question, your plan and its dataset; nothing else.</p></div>';
+}
+async function ask(q){
+  q=q.trim(); if(!q||asking) return; chat.push({role:"user",content:q}); render();
+  var live=$("#live"); live.innerHTML='<div class="msg"><div class="who">Kosh</div><div class="thinking">Checking the dataset…</div></div>';
+  var sample=null; try{sample=await window.claude.use("sample");}catch(e){sample=null;}
+  if(!sample){chat.push({role:"assistant",content:offlineAnswer(q)}); render(); return;}
+  asking=new AbortController(); $("#stopBtn").hidden=false; $("#askBtn").disabled=true;
+  var turns=[{role:"user",content:RULES+datasetForPrompt()+"\n\nUSER'S PLAN:\n"+planSummary()+"\n\nAnswer the questions that follow."}];
+  chat.forEach(function(m){turns.push({role:m.role,content:m.content});});
+  if(turns.length>13) turns=[turns[0]].concat(turns.slice(-11));
+  try{
+    var res=await sample(turns,{cache:false,signal:asking.signal,onText:function(u){live.innerHTML='<div class="msg"><div class="who">Kosh</div><div class="body answer">'+renderAnswer(u.text)+'</div></div>';}});
+    chat.push({role:"assistant",content:res.text,note:res.truncated?"Cut short. Ask for less at a time.":""});
+  }catch(e){
+    var code=e&&e.code;
+    if(code==="cancelled"){ if(e.text) chat.push({role:"assistant",content:e.text,note:"Stopped."}); else chat.pop(); }
+    else if(code==="not_granted"||code==="sampling_disabled"||code==="not_declared"||code==="capability_disabled"){chat.push({role:"assistant",content:offlineAnswer(q)});}
+    else if(code==="rate_limited"){chat.push({role:"assistant",content:e.text||"Too many questions at once. Wait a minute and ask again.",note:"Rate limited."});}
+    else if(code==="refused"){chat.push({role:"assistant",content:"Kosh can't answer that one. Try asking about GCC cities, costs, incentives or providers."});}
+    else {chat.push({role:"assistant",content:e&&e.text?e.text:"The answer was interrupted. Ask again.",note:"Interrupted."});}
+  }
+  asking=null; render();
+}
+/* ---------- conflicts ---------- */
+function vConflicts(){
+  return '<div class="eyebrow">Where sources disagree</div><h1>'+D.conflicts.length+' places where the published numbers don\'t agree.</h1><p class="lede">Most of the confusion in this market is definitions, dates and incentives. Kosh shows every version side by side, says why they differ, and flags sources that also sell GCC services.</p>'+
+  '<div class="section">'+D.conflicts.map(function(x){return '<div class="card fade" id="'+x.id+'"><div class="row" style="justify-content:space-between"><h2>'+esc(x.question)+'</h2><span class="chip chip--warn"><i class="dot dot--conflict" style="margin:0;cursor:default"></i>'+x.facts.length+' figures</span></div>'+
+    '<div class="xgrid">'+x.facts.map(function(fid){var f=FACT[fid], s=SRC[f.source]; return '<div class="xcell"><div class="v">'+fmtVal(f)+'</div><div class="small">'+esc(f.unit)+'</div><div class="src">'+esc(s.publisher)+' · '+esc(f.as_of)+dot(fid)+'</div>'+(f.definition?'<div class="src">'+esc(f.definition)+'</div>':'')+(s.sells_services?'<div class="src" style="color:var(--conflict)">Sells GCC services</div>':'')+'</div>';}).join("")+'</div>'+
+    '<p style="margin-top:14px;max-width:70ch">'+esc(x.why)+'</p></div>';}).join("")+'</div>';
+}
+/* ---------- providers ---------- */
+var provFilter="All"; var introSent=false;
+function vProviders(){
+  var cats=["All"].concat(D.providers.map(function(p){return p.category;}).filter(function(v,i,a){return a.indexOf(v)===i;}).sort());
+  var list=D.providers.filter(function(p){return provFilter==="All"||p.category===provFilter;}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  return '<div class="eyebrow">Providers</div><h1>Who does what, and what they have actually delivered.</h1><p class="lede">Listed alphabetically. Kosh never ranks providers and nobody can pay to move up. Each listing separates what a provider says about itself from deliveries Kosh has verified with the client.</p>'+
+  '<div class="section"><div class="row">'+cats.map(function(c){return '<button class="chip'+(c===provFilter?' chip--ok':'')+'" data-cat="'+esc(c)+'">'+esc(c)+'</button>';}).join("")+'</div><div>'+
+  list.map(function(p){return '<div class="prov"><div class="stack" style="gap:6px;min-width:0"><div class="row" style="gap:8px"><h3>'+esc(p.name)+'</h3><span class="chip">'+esc(p.category)+'</span></div><div class="small"><span class="muted">Public claim:</span> '+esc(p.claim)+srcDot(p.source)+'</div></div><div class="stack" style="gap:4px;text-align:right"><span class="eyebrow">Kosh-verified deliveries</span><span class="mono small muted">None yet</span></div></div>';}).join("")+'</div>'+
+  '<div class="grid2"><div class="card stack"><h3>How a delivery gets verified</h3><ol class="small" style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px"><li>The provider lists a completed GCC engagement.</li><li>Kosh asks the client company to confirm scope, dates and outcome.</li><li>A document (contract extract, MCA filing, lease record) backs it up.</li><li>Only then does it count, with the client\'s permission to show it.</li></ol></div>'+
+  '<div class="card stack"><h3>Ask for introductions</h3>'+(introSent?'<p class="small">Saved. In the live product your plan goes only to the providers you pick, and only once you confirm. <b>Nothing was sent from this prototype.</b></p>':'<p class="small muted">Pick providers and Kosh shares your plan summary with them. You choose who sees it.</p><div class="checks">'+D.providers.slice(0,6).map(function(p,i){return '<label><input type="checkbox" id="intro'+i+'"> '+esc(p.name)+'</label>';}).join("")+'</div><button class="btn" id="introBtn">Share my plan with these providers</button>')+'</div></div></div>';
+}
+/* ---------- brief ---------- */
+var briefAI=null;
+function briefData(){
+  var p=plan;
+  var rows=p.cities.map(function(cid){return {c:CITY[cid],cost:costFor(cid,p),v:bestVerdict(cid,p),sal:first(cid,"Software engineer median salary")};});
+  var priced=rows.filter(function(r){return r.cost;}).sort(function(a,b){return a.cost.lo-b.cost.lo;});
+  return {rows:rows,priced:priced};
+}
+function vBrief(){
+  var p=plan, b=briefData(), lead=b.priced[0], second=b.priced[1];
+  var verdict=lead?("Lowest run cost: "+lead.c.name+(second?" then "+second.c.name:"")+". Settle the incentive questions before you sign a lease."):"Kosh needs more data before it can price these cities.";
+  var html='<div class="brief fade" id="briefDoc"><div class="row" style="justify-content:space-between"><span class="eyebrow">Decision brief · '+esc((function(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})(new Date()))+'</span><span class="src">Dataset as of '+esc(D.meta.as_of)+'</span></div>'+
+  '<h1 style="margin-top:10px">'+esc(p.company)+' in India</h1><p class="verdictline">'+esc(verdict)+'</p>'+
+  '<h2>The plan</h2><p class="small">'+p.y1+' people in year 1, '+p.y3+' by year 3 · '+esc(p.functions.map(function(f){return label(FUNCS,f);}).join(", "))+' · '+esc(label(MODELS,p.model))+' · '+esc(label(REVS,p.revenue))+' parent · '+esc(p.timeline)+'</p>'+
+  '<h2>Cities</h2><div class="tablewrap" style="margin-top:8px"><table style="min-width:560px"><thead><tr><th>City</th><th>Year-1 run cost</th><th>Engineer median</th><th>Incentives</th></tr></thead><tbody>'+
+  b.rows.map(function(r){return '<tr><td class="city">'+esc(r.c.name)+'</td><td class="mono">'+(r.cost?cr(r.cost.lo)+" to "+cr(r.cost.hi):"Not enough data")+'</td><td class="mono">'+(r.sal?"₹"+r.sal.num+"L"+dot(r.sal.id):"No figure")+'</td><td>'+(r.v?verdictChip(r.v.verdict)+' <span class="src">'+esc(r.v.state.name)+'</span>':'')+'</td></tr>';}).join("")+'</tbody></table></div>'+
+  '<h2>Kosh\'s reading</h2><div id="briefAI" class="answer small">'+(briefAI?renderAnswer(briefAI):'<p class="muted">Add a written summary drawn only from the figures above.</p>')+'</div>'+
+  '<h2>Numbers to treat with care</h2><ul class="small" style="padding-left:18px;display:flex;flex-direction:column;gap:4px">'+["X3","X7","X8"].map(function(id){var x=D.conflicts.filter(function(c){return c.id===id;})[0]; return '<li><b>'+esc(x.question)+'</b> '+esc(x.why)+' <button class="cite" data-conflict="'+id+'">'+id+'</button></li>';}).join("")+'</ul>'+
+  '<h2>Questions to settle before you commit</h2><ol class="small" style="padding-left:18px;display:flex;flex-direction:column;gap:4px">'+briefQuestions().map(function(q){return '<li>'+esc(q)+'</li>';}).join("")+'</ol>'+
+  '<p class="src" style="margin-top:24px">Costs are estimates from published medians and ranges, using the assumptions shown in Compare cities. Not legal, tax or investment advice. Every figure links to its source in Kosh.</p></div>';
+  return '<div class="eyebrow">Step 4 · Decision brief</div><h1>One page your board can read.</h1><p class="lede">Built from your plan and Kosh\'s sourced figures. Share it with your CFO, or take it into your first provider conversations.</p>'+
+  '<div class="section"><div class="row"><button class="btn btn--primary" id="briefAIBtn">'+(briefAI?"Rewrite the summary":"Write the summary")+'</button><button class="btn" id="dlBrief">Download as Markdown</button><button class="btn" id="copyBrief">Copy text</button><span class="thinking" id="briefStatus"></span></div>'+html+'</div>';
+}
+function briefQuestions(){var q=[]; var p=plan;
+  p.cities.forEach(function(cid){statesFor(cid).forEach(function(st){var e=evalState(st,p,cid); if(e.verdict==="check"){var r=e.reasons.filter(function(x){return x.indexOf("On an EOR")<0;})[0]; if(r) q.push(st.name+": "+r);}});});
+  if(p.model==="eor") q.push("When will you incorporate? Kosh's reading is that most state incentives start only once your own unit is registered.");
+  q.push("Get two EOR or BOT quotes in writing: published prices run from US$99 to US$599 per person per month.");
+  q.push("Ask every provider for two client references from the last 24 months, in your size band.");
+  return q.filter(function(v,i,a){return a.indexOf(v)===i;}).slice(0,7);}
+function briefMarkdown(){var p=plan,b=briefData();
+  var md="# "+p.company+" in India: decision brief\n\nDataset as of "+D.meta.as_of+". Built with Kosh.\n\n## Plan\n"+p.y1+" people in year 1, "+p.y3+" by year 3. Functions: "+p.functions.map(function(f){return label(FUNCS,f);}).join(", ")+". Model: "+label(MODELS,p.model)+". Timeline: "+p.timeline+".\n\n## Cities\n| City | Year-1 run cost | Engineer median | Incentives |\n|---|---|---|---|\n"+
+  b.rows.map(function(r){return "| "+r.c.name+" | "+(r.cost?cr(r.cost.lo)+" to "+cr(r.cost.hi):"Not enough data")+" | "+(r.sal?"₹"+r.sal.num+"L (Flexiple Talent Market, Aug 2026)":"No figure")+" | "+(r.v?VERDICT[r.v.verdict][1]+" ("+r.v.state.name+")":"")+" |";}).join("\n")+
+  (briefAI?"\n\n## Kosh's reading\n"+briefAI.replace(/\[(F\d+)\]/g,function(m,id){var f=FACT[id]; return f?" ("+SRC[f.source].publisher+", "+f.as_of+")":"";}):"")+
+  "\n\n## Questions to settle\n"+briefQuestions().map(function(q,i){return (i+1)+". "+q;}).join("\n")+
+  "\n\n## Sources\n"+D.sources.filter(function(s){return ["S28","S32","S33","S34","S26","S27"].indexOf(s.id)>=0||p.cities.some(function(c){return statesFor(c).some(function(st){return st.source===s.id;});});}).map(function(s){return "- "+s.publisher+", "+s.title+" ("+s.date+"): "+s.url;}).join("\n")+
+  "\n\nCosts are estimates. Not legal, tax or investment advice.\n"; return md;}
+async function writeBriefAI(){
+  var st=$("#briefStatus"), btn=$("#briefAIBtn"); var sample=null; try{sample=await window.claude.use("sample");}catch(e){}
+  if(!sample){st.textContent="The assistant isn't available in this view. The rest of the brief still works."; return;}
+  btn.disabled=true; st.textContent="Thinking…";
+  var prompt=RULES+datasetForPrompt()+"\n\nUSER'S PLAN:\n"+planSummary()+"\n\nTASK: Write the 'Kosh's reading' section of a one-page decision brief for this plan: 120 to 160 words, plain prose in two short paragraphs. Paragraph 1: which cities to shortlist and why, using the computed costs and incentive verdicts. Paragraph 2: the biggest uncertainty in the numbers and what to verify. Cite fact ids for every figure.";
+  try{var r=await sample(prompt,{modelTier:"default",onText:function(u){st.textContent=""; var el=$("#briefAI"); if(el) el.innerHTML=renderAnswer(u.text);}}); briefAI=r.text; render();}
+  catch(e){btn.disabled=false; st.textContent=(e&&e.code==="not_granted")?"Allow Kosh to use Claude to write the summary.":"Couldn't write the summary. Try again.";}
+}
+/* ---------- sources ---------- */
+function vSources(){
+  var rows=D.sources.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).map(function(s){var n=D.facts.filter(function(f){return f.source===s.id;}).length;
+    return '<tr><td class="mono small">'+s.id+'</td><td><b>'+esc(s.publisher)+'</b><div class="small">'+esc(s.title)+'</div></td><td class="mono small">'+esc(s.date)+'</td><td class="small">'+esc(s.kind)+'</td><td class="small" style="color:'+(s.sells_services?'var(--conflict)':'var(--ink-muted)')+'">'+(s.sells_services?esc(s.sells_services):"None known")+'</td><td class="mono small">'+n+'</td><td><a class="small" href="'+esc(s.url)+'" target="_blank" rel="noopener">Open</a></td></tr>';}).join("");
+  var conflicted=D.sources.filter(function(s){return s.sells_services;}).length;
+  return '<div class="eyebrow">Sources</div><h1>Every source, and what it sells.</h1><p class="lede">'+conflicted+' of the '+D.sources.length+' sources behind this prototype belong to firms that also sell GCC services. Kosh still uses them, and tells you each time.</p>'+
+  '<div class="section"><div class="tablewrap"><table><thead><tr><th>ID</th><th>Source</th><th>Date</th><th>Type</th><th>Interest to declare</th><th>Figures</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  $("#nav").innerHTML=navHTML(); $("#navm").innerHTML=navHTML();
+  $("#foot").innerHTML="Prototype · dataset "+esc(D.meta.as_of)+"<br>"+D.facts.length+" figures · "+D.sources.length+" sources";
+  var m=$("#main");
+  m.innerHTML={plan:vPlan,cities:vCities,incentives:vIncentives,ask:vAsk,conflicts:vConflicts,providers:vProviders,brief:vBrief,sources:vSources}[view]();
+  wire();
+}
+function wire(){
+  var b;
+  if((b=$("#savePlan"))) b.onclick=function(){readForm(); render(); var s=$("#planStatus"); if(s) s.textContent="Updated.";};
+  if((b=$("#resetPlan"))) b.onclick=function(){plan=JSON.parse(JSON.stringify(EXAMPLE_PLAN)); plan._example=true; planIsExample=true; savePlan(); render();};
+  if((b=$("#readPlan"))) b.onclick=readPlanAI;
+  var f=$("#askForm"); if(f){ f.onsubmit=function(e){e.preventDefault(); var v=$("#askBox").value; ask(v);}; $("#askBox").onkeydown=function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault(); ask(this.value);}}; $("#stopBtn").onclick=function(){if(asking) asking.abort();}; }
+  [].forEach.call(document.querySelectorAll("[data-suggest]"),function(x){x.onclick=function(){ask(x.getAttribute("data-suggest"));};});
+  [].forEach.call(document.querySelectorAll("[data-cat]"),function(x){x.onclick=function(){provFilter=x.getAttribute("data-cat"); render();};});
+  if((b=$("#introBtn"))) b.onclick=function(){introSent=true; render();};
+  if((b=$("#briefAIBtn"))) b.onclick=writeBriefAI;
+  if((b=$("#dlBrief"))) b.onclick=async function(){var st=$("#briefStatus"); var dl=null; try{dl=await window.claude.use("downloads");}catch(e){}
+    if(!dl){st.textContent="Downloads aren't available here. Use Copy text instead."; return;}
+    try{await dl.save({filename:(plan.company||"kosh").replace(/[^a-z0-9]+/gi,"-").toLowerCase()+"-india-brief.md",data:briefMarkdown()}); st.textContent="Saved.";}catch(e){st.textContent=e&&e.code==="declined"?"Download cancelled.":"Couldn't save the file. Use Copy text instead.";}};
+  if((b=$("#copyBrief"))) b.onclick=function(){var st=$("#briefStatus"); var t=briefMarkdown(); try{navigator.clipboard.writeText(t).then(function(){st.textContent="Copied.";},function(){fallbackCopy(t); st.textContent="Text selected. Press Ctrl+C or Cmd+C.";});}catch(e){fallbackCopy(t); st.textContent="Text selected. Press Ctrl+C or Cmd+C.";}};
+}
+function fallbackCopy(t){var ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); setTimeout(function(){ta.remove();},4000);}
+async function readPlanAI(){
+  var st=$("#planStatus"), txt=$("#planText").value.trim(); if(!txt){st.textContent="Write a sentence or two about your plan first."; return;}
+  var sample=null; try{sample=await window.claude.use("sample");}catch(e){}
+  if(!sample){st.textContent="The assistant isn't available here. Fill in the form instead."; return;}
+  st.textContent="Reading your plan…"; $("#readPlan").disabled=true;
+  var prompt="Extract a GCC setup plan from the text below. Reply with only a JSON object with these keys: company (string), revenue (one of lt100m, 100m-1b, gt1b, or null), rank (one of g2000, f1000, other, or null), functions (array from: engineering, data, finance, operations, support, sales), y1 (integer headcount in year 1 or null), y3 (integer headcount in year 3 or null), model (one of eor, bot, own, or null), cities (array from: "+D.cities.map(function(c){return c.id+" ("+c.name+")";}).join(", ")+"), timeline (string or null). Use null when the text doesn't say. Example: {\"company\":\"Acme\",\"revenue\":\"100m-1b\",\"rank\":\"other\",\"functions\":[\"engineering\"],\"y1\":40,\"y3\":120,\"model\":\"eor\",\"cities\":[\"pune\"],\"timeline\":\"2027\"}\n\nTEXT:\n"+txt.slice(0,4000);
+  try{var j=await sample.json(prompt,{modelTier:"quick"});
+    if(j&&typeof j==="object"){ if(j.company) plan.company=String(j.company); if(j.revenue&&REVS.some(function(r){return r[0]===j.revenue;})) plan.revenue=j.revenue; if(j.rank&&RANKS.some(function(r){return r[0]===j.rank;})) plan.rank=j.rank;
+      if(Array.isArray(j.functions)&&j.functions.length) plan.functions=j.functions.filter(function(f){return FUNCS.some(function(x){return x[0]===f;});});
+      if(Number(j.y1)>0) plan.y1=Math.round(Number(j.y1)); if(Number(j.y3)>0) plan.y3=Math.max(plan.y1,Math.round(Number(j.y3))); else plan.y3=Math.max(plan.y3,plan.y1);
+      if(j.model&&MODELS.some(function(m){return m[0]===j.model;})) plan.model=j.model;
+      if(Array.isArray(j.cities)){var cs=j.cities.filter(function(c){return CITY[c];}); if(cs.length) plan.cities=cs;}
+      if(j.timeline) plan.timeline=String(j.timeline);
+      planIsExample=false; plan._example=false; savePlan(); render(); var s2=$("#planStatus"); if(s2) s2.textContent="Done. Check the fields below and adjust anything Kosh got wrong.";
+      var pt=$("#planText"); if(pt) pt.value=txt; }
+  }catch(e){ st.textContent=(e&&e.code==="not_granted")?"Allow Kosh to use Claude, or fill in the form.":"Kosh couldn't read that. Fill in the form instead."; $("#readPlan").disabled=false; }
+}
+render();
+})();
+</script>
