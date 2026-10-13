@@ -6,7 +6,7 @@ Kosh is a neutral record of India's Global Capability Centre ecosystem. A compan
 
 This repository is the working prototype: API, database, ingestion pipeline, AI layer and front end.
 
-**Live demo:** https://sarathum-designer.github.io/Kosh-Prototype/ (static build; the AI assistant falls back to stored figures there. Run the server below with an API key for the full assistant.)
+**Live demo:** https://sarathum-designer.github.io/Kosh-Prototype/ · **Strategy site:** https://sarathum-designer.github.io/Kosh-Prototype/strategy/ (static build; the AI assistant falls back to stored figures there. Run the server below with an API key for the full assistant.)
 
 ## Run it
 
